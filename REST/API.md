@@ -269,8 +269,106 @@ Location: /v1/jobs/01J...
 - Strict input validation with precise 422s
 
 ## 24. Documentation Style
-- Each endpoint documents: summary, auth/scopes, query, request, responses, errors, rate-limit class, examples
-- Provide `curl` + TypeScript examples mirroring real payloads
+
+Each endpoint must be comprehensively documented to serve both human developers and AI assistants.
+
+### Required Documentation Elements
+
+1. **Summary & Description**
+   - One-line summary
+   - Detailed purpose explanation
+   - When to use this endpoint
+
+2. **Authentication & Authorization**
+   - Required authentication method
+   - Required scopes/permissions
+
+3. **Request Specification**
+   - HTTP method and path
+   - Path parameters (type, format, constraints)
+   - Query parameters (defaults, validation)
+   - Request headers (required and optional)
+   - Request body schema with field descriptions
+
+4. **Response Specification**
+   - Success status codes
+   - Response headers
+   - Response body schema
+   - Example successful responses
+
+5. **Error Documentation**
+   - All possible error status codes
+   - Problem Details examples for each
+   - Common error scenarios
+
+6. **Rate Limiting**
+   - Rate limit class
+   - Quota consumption
+
+7. **Code Examples**
+   - curl with realistic data
+   - TypeScript with generated client
+
+### Documentation Template
+
+**Endpoint**: `POST /v1/resources`
+**Purpose**: Create new resource
+**Authentication**: Required (OAuth2)
+**Authorization**: `resources:write` scope
+**Rate Limit**: Standard (100/hour)
+
+**Request Body Schema**:
+```json
+{
+  "title": "string (required, max 255 chars)",
+  "description": "string (optional, max 1000 chars)",
+  "priority": "enum: low|medium|high",
+  "category": "string (optional)"
+}
+```
+
+**Success Response** (201):
+```json
+{
+  "data": {
+    "id": "res_01JCXYZ...",
+    "title": "string",
+    "description": "string",
+    "priority": "medium",
+    "category": "string",
+    "status": "active",
+    "createdAt": "2024-01-15T10:30:00Z",
+    "updatedAt": "2024-01-15T10:30:00Z"
+  },
+  "meta": { "version": "1.0" },
+  "links": {
+    "self": "/v1/resources/res_01JCXYZ...",
+    "updates": "/v1/resources/res_01JCXYZ.../updates"
+  }
+}
+```
+
+**Error Responses**:
+- **400**: Invalid request body
+- **401**: Missing/invalid authentication  
+- **403**: Insufficient permissions
+- **422**: Validation errors (Problem Details)
+- **429**: Rate limit exceeded
+
+**Code Examples**:
+```bash
+curl -X POST https://api.example.com/v1/resources \
+  -H "Authorization: Bearer eyJ..." \
+  -H "Content-Type: application/json" \
+  -d '{"title": "Example", "priority": "medium"}'
+```
+
+```typescript
+const resource = await api.createResource({
+  title: 'Example',
+  priority: 'medium'
+});
+```
 
 ---
 
