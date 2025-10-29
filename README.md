@@ -32,6 +32,10 @@ These are opinionated, concise, and LLM-friendly guidelines designed to create c
 - Backend (Rust): [languages/RUST.md](./languages/RUST.md)
 - Frontend (React): [languages/REACT.md](./languages/REACT.md)
 
+### Development Practices
+- Testing Strategy: [Testing/STRATEGY.md](./Testing/STRATEGY.md)
+- Code Review: [CodeReview/GUIDELINES.md](./CodeReview/GUIDELINES.md)
+
 ## Key Decisions & Defaults
 - **JSON**: camelCase; envelope `{ data, meta, links }`; omit absent fields (avoid nulls)
 - **Timestamps**: ISO-8601 UTC with `Z`, always include milliseconds (e.g., `2025-09-01T20:00:00.000Z`)
