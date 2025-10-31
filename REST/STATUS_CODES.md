@@ -1,4 +1,4 @@
-### HTTP status codes and application error codes
+# HTTP Status Codes and Application Error Codes
 
 This document outlines the usage of HTTP status codes and application-level error codes according to the Hypernetix API Guidelines. Ensure that responses remain consistent across all endpoints.
 
