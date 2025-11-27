@@ -217,8 +217,15 @@ Quick reference:
 - 5xx Other Server errors
 
 ## 19. Batch & Bulk
-- Batch reads via filters
-- Bulk write: `POST /tickets:batch` up to N items → `207 Multi-Status` with per-item results; idempotency keys per item
+
+For complete batch and bulk operations specification including error formats, atomicity options, and idempotency, see [BATCH.md](BATCH.md).
+
+**Quick Summary:**
+- **Endpoint pattern**: `POST /resources:batch` up to 100 items
+- **Response**: `207 Multi-Status` (partial success) or specific status code (all same outcome)
+- **Error format**: Full RFC 9457 Problem Details per failed item
+- **Atomicity**: Endpoint-specific (best-effort default, atomic for critical operations)
+- **Idempotency**: Per-item `idempotencyKey` with 1-hour retention
 
 ## 20. OpenAPI & Codegen
 - **Source of truth**: OpenAPI 3.1
