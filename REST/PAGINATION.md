@@ -443,3 +443,109 @@ Clients navigate backward by using `prev_cursor` as the `cursor` value in a new 
 
 - Start at `v = 1`.
 - On breaking changes to cursor content or comparison semantics, bump `v` and reject older tokens with `INVALID_CURSOR`.
+
+---
+
+# Field Projection with `$select`
+
+## Overview
+
+Sparse field selection via OData-style `$select` query parameter. Returns only requested fields to reduce payload size.
+
+**Syntax**: `$select=field1,field2,field3` (comma-separated, no whitespace, case-sensitive)
+
+**Examples**:
+```http
+GET /v1/tickets/01J...?$select=id,title,status,priority
+GET /v1/tickets?$filter=status eq 'open'&$orderby=priority desc&$select=id,title,status
+```
+
+**Future**: Resource expansion with `$expand` will be added in a future iteration.
+
+## Default Projection
+
+When `$select` is omitted, servers return a **default projection**:
+- **Includes**: Common fields (`id`, `type`), core business fields (`title`, `status`), timestamps, small reference IDs
+- **Excludes**: Large text fields, binary data, sensitive fields, expensive computed fields
+
+Default projection documented per resource in OpenAPI using `x-field-projection` vendor extension.
+
+## Allowlisting & Security
+
+- Only **allowlisted fields** may appear in `$select` → `400 INVALID_FIELD` if not allowed
+- **Max fields per request**: 50 (configurable) → `400 TOO_MANY_FIELDS` if exceeded
+- Authorization via allowlist definition (at design time), not runtime checks
+
+## Response Format
+
+**Request**:
+```http
+GET /v1/tickets?limit=2&$select=id,title,status
+```
+
+**Response** (200 OK) - only requested fields included:
+```json
+{
+  "data": [
+    { "id": "01J...", "title": "Database timeout", "status": "open" },
+    { "id": "01J...", "title": "Login error", "status": "in_progress" }
+  ],
+  "meta": { "limit": 2, "hasNext": true },
+  "links": { "next": "/v1/tickets?limit=2&cursor=..." }
+}
+```
+
+## Interaction with Pagination
+
+Cursors encode `$filter`, `$orderby`, **and `$select`** to ensure consistent response shape across pages.
+
+**Field selection is locked per pagination session**. Attempting to change `$select` with an existing cursor returns `400 FIELD_SELECTION_MISMATCH`. To use different fields, start a new pagination session without a cursor.
+
+## Error Handling
+
+All errors return RFC 9457 Problem Details format.
+
+**`INVALID_FIELD` (400)**: Requested field not in allowlist. Returns `invalidFields` array and `allowedFields` array.
+
+**`TOO_MANY_FIELDS` (400)**: Exceeded max field limit (default 50). Returns `maxFields` integer and `requestedFields` integer.
+
+**`FIELD_SELECTION_MISMATCH` (400)**: Cannot change `$select` during pagination. Returns `cursorSelect` string and `requestSelect` string.
+
+## OpenAPI Integration
+
+Document field projection using the `x-field-projection` vendor extension.
+
+### Vendor Extension
+
+```yaml
+x-field-projection:
+  defaultProjection: [id, title, status, priority, createdAt, updatedAt]
+  selectableFields: [id, title, description, status, priority, createdAt, updatedAt, assigneeId, reporterId]
+  maxFields: 50
+```
+
+Field types are defined in the resource schema; `x-field-projection` only specifies which fields are selectable.
+
+## Code Examples
+
+**Get ticket with specific fields**:
+```bash
+curl -sS \
+  -H "Authorization: Bearer $TOKEN" \
+  "https://api.example.com/v1/tickets/01JDKTBE4WZNR9H8K0VF3KGXQY?\$select=id,title,status,priority"
+```
+
+**Combine with filtering, sorting, and pagination**:
+```bash
+curl -sS \
+  -H "Authorization: Bearer $TOKEN" \
+  "https://api.example.com/v1/tickets?limit=25&\$filter=status eq 'open'&\$orderby=priority desc&\$select=id,title,priority,status"
+```
+
+## Implementation Notes
+
+**Server validation**: Parse comma-separated fields, validate against allowlist, check field count limit, return appropriate 400 errors.
+
+**Database**: Use SQL column pruning (`SELECT field1, field2` not `SELECT *`), ensure primary key and cursor fields always selected internally.
+
+**Security**: Enforce allowlists (never arbitrary field selection), exclude sensitive fields at design time, log selection patterns.

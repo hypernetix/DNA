@@ -13,7 +13,10 @@ This document outlines the usage of HTTP status codes and application-level erro
 
 - 400 Bad Request
   - Malformed syntax, invalid parameters, or invalid cursor.
-  - Error codes: `INVALID_CURSOR`, `ORDER_MISMATCH`, `FILTER_MISMATCH`, `UNSUPPORTED_FILTER_FIELD`, `UNSUPPORTED_ORDERBY_FIELD`, `INVALID_QUERY`.
+  - Error codes:
+    - Pagination: `INVALID_CURSOR`, `ORDER_MISMATCH`, `FILTER_MISMATCH`, `UNSUPPORTED_FILTER_FIELD`, `UNSUPPORTED_ORDERBY_FIELD`
+    - Field projection: `INVALID_FIELD`, `TOO_MANY_FIELDS`, `FIELD_SELECTION_MISMATCH`
+    - General: `INVALID_QUERY`
 - 401 Unauthorized
   - Missing/invalid/expired auth.
   - Error codes: `UNAUTHENTICATED`, `TOKEN_EXPIRED`.
