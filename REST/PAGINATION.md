@@ -232,8 +232,8 @@ Assume canonical sort `created_at DESC, id DESC`.
 6) Fetch `pageSize + 1` rows.
 7) Trim `items = rows.slice(0, pageSize)`.
 8) Compute cursors:
-   - `next_cursor` from the last item in `items`.
-   - `prev_cursor` from the first item in `items`.
+   - `nextCursor` from the last item in `items`.
+   - `prevCursor` from the first item in `items`.
 9) Optionally compute previous existence internally if needed; clients rely solely on presence/absence of cursor fields.
 
 ### Complete Pagination Examples: All 4 Scenarios
@@ -438,7 +438,7 @@ ORDER BY created_at ASC, id ASC
 ## Edge Cases & Guarantees
 
 - Returning fewer than `limit` items is allowed (e.g., last page).
-- `next_cursor` may be omitted if there is no further item; `prev_cursor` may be omitted on the very first page.
+- `nextCursor` may be omitted if there is no further item; `prevCursor` may be omitted on the very first page.
 - Inserts/deletes during pagination:
   - The strictly monotonic tuple comparison `(primary, tiebreaker)` prevents duplicates and minimizes gaps.
   - Absolute consistency is not guaranteed without snapshots; this is acceptable for feed-like listings.
@@ -455,7 +455,7 @@ ORDER BY created_at ASC, id ASC
 
 ## Backward Navigation
 
-Clients navigate backward by using `prev_cursor` as the `cursor` value in a new request. The server still returns results in canonical order; only the selection window moves.
+Clients navigate backward by using `prevCursor` as the `cursor` value in a new request. The server still returns results in canonical order; only the selection window moves.
 
 ## Versioning
 

@@ -232,7 +232,7 @@ Quick reference:
 ```bash
 curl -sS \
   -H "Authorization: Bearer $TOKEN" \
-  "https://api.example.com/v1/tickets?limit=25&cursor=...&\$filter=status in ('open','in_progress')&\$orderby=priority desc,createdAt asc&\$select=id,title,priority,status,createdAt"
+  "https://api.example.com/v1/tickets?limit=25&cursor=...&%24filter=status%20in%20(%27open%27,%27in_progress%27)&%24orderby=priority%20asc,%20createdAt%20asc&%24select=id,title,priority,status,createdAt"
 ```
 
 ```json
@@ -248,8 +248,8 @@ curl -sS \
     }
   },
   "links": {
-    "self": "https://api.example.com/v1/tickets?limit=25&status.in=open,in_progress&sort=-priority,createdAt&fields[tickets]=id,title,priority,status,createdAt",
-    "next": "https://api.example.com/v1/tickets?limit=25&cursor=eyJ2IjoxLCJrIjpbIjIwMjUtMDgtMzFUMTA6MDU6MTcuMDAwWiIsIjAxSi4uLiJdLCJvIjoiZGVzYyIsInMiOiJjcmVhdGVkX2F0LGlkIn0&status.in=open,in_progress&sort=-priority,createdAt&fields[tickets]=id,title,priority,status,createdAt",
+    "self": "https://api.example.com/v1/tickets?limit=25&cursor=...&%24filter=status%20in%20(%27open%27,%27in_progress%27)&%24orderby=priority%20asc,%20createdAt%20asc&%24select=id,title,priority,status,createdAt",
+    "next": "https://api.example.com/v1/tickets?limit=25&cursor=eyJ2IjoxLCJrIjpbIjIwMjUtMDgtMzFUMTA6MDU6MTcuMDAwWiIsIjAxSi4uLiJdLCJvIjoiZGVzYyIsInMiOiJjcmVhdGVkX2F0LGlkIn0&%24filter=status%20in%20(%27open%27,%27in_progress%27)&%24orderby=priority%20asc,%20createdAt%20asc&%24select=id,title,priority,status,createdAt",
     "prev": null
   }
 }
