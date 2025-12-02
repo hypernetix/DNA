@@ -56,23 +56,34 @@ Notes:
 
 ## Response
 
-Return a consistent envelope:
+Return a consistent envelope following the canonical API.md format:
 
-```
+```json
 {
-  "items": [ ... ],
-  "page_info": {
-    "next_cursor": "<opaque>",
-    "prev_cursor": "<opaque>",
-    "limit": 20
+  "data": [ ... ],
+  "meta": {
+    "pageInfo": {
+      "nextCursor": "<opaque>",
+      "prevCursor": "<opaque>",
+      "limit": 20
+    }
+  },
+  "links": {
+    "self": "https://api.example.com/v1/resource?limit=20&cursor=...",
+    "next": "https://api.example.com/v1/resource?limit=20&cursor=...",
+    "prev": "https://api.example.com/v1/resource?limit=20&cursor=..."
   }
 }
 ```
 
 Rules:
-- `items` are in the endpoint’s canonical sort order (do not reverse for backward navigation).
-- `next_cursor` points to the position immediately after the last item in `items` and may be omitted if there is no next page.
-- `prev_cursor` points to the position immediately before the first item in `items` and may be omitted on the first page.
+- `data` contains items in the endpoint's canonical sort order (do not reverse for backward navigation).
+- `meta.pageInfo.nextCursor` points to the position immediately after the last item in `data` and may be omitted if there is no next page.
+- `meta.pageInfo.prevCursor` points to the position immediately before the first item in `data` and may be omitted on the first page.
+- `meta.pageInfo.limit` echoes the effective page size.
+- `links.self` contains the current request URL.
+- `links.next` contains the full URL with the next cursor (omit if no next page).
+- `links.prev` contains the full URL with the previous cursor (omit if on first page).
 - Do not include `total_count` in cursor pagination responses.
 
 ## Canonical Sort Requirements
@@ -338,13 +349,20 @@ GET /v1/messages?limit=20&cursor=eyJ2IjoxLCJrIjpbIjIwMjUtMDktMTRUMTI6MzQ6NTYuNzg
 
 ```json
 {
-  "items": [
-    { "id": "018f6c9e-2c3b-7b1a-8f4a-9c3d2b1a0e5f", "created_at": "2025-09-14T12:34:57.100Z", "text": "..." }
+  "data": [
+    { "id": "018f6c9e-2c3b-7b1a-8f4a-9c3d2b1a0e5f", "createdAt": "2025-09-14T12:34:57.100Z", "text": "..." }
   ],
-  "page_info": {
-    "next_cursor": "eyJ2IjoxLCJrIjpbIjIwMjUtMDktMTRUMTI6MzQ6NTcuMTAwWiIsIjEyM2U0NTY3Il0sIm8iOiJkZXNjIiwicyI6ImNyZWF0ZWRfYXQsaWQiLCJmIjoiZjg2OWJhIn0",
-    "prev_cursor": "eyJ2IjoxLCJrIjpbIjIwMjUtMDktMTRUMTI6MzQ6NTcuMTAwWiIsIjEyM2U0NTY3Il0sIm8iOiJkZXNjIiwicyI6ImNyZWF0ZWRfYXQsaWQiLCJmIjoiZjg2OWJhIn0",
-    "limit": 20
+  "meta": {
+    "pageInfo": {
+      "nextCursor": "eyJ2IjoxLCJrIjpbIjIwMjUtMDktMTRUMTI6MzQ6NTcuMTAwWiIsIjEyM2U0NTY3Il0sIm8iOiJkZXNjIiwicyI6ImNyZWF0ZWRfYXQsaWQiLCJmIjoiZjg2OWJhIn0",
+      "prevCursor": "eyJ2IjoxLCJrIjpbIjIwMjUtMDktMTRUMTI6MzQ6NTcuMTAwWiIsIjEyM2U0NTY3Il0sIm8iOiJkZXNjIiwicyI6ImNyZWF0ZWRfYXQsaWQiLCJmIjoiZjg2OWJhIn0",
+      "limit": 20
+    }
+  },
+  "links": {
+    "self": "https://api.example.com/v1/messages?limit=20&cursor=eyJ2IjoxLCJrIjpbIjIwMjUtMDktMTRUMTI6MzQ6NTYuNzg5WiIsIjEyM2U0NTY3Il0sIm8iOiJkZXNjIiwicyI6ImNyZWF0ZWRfYXQsaWQiLCJmIjoiZjg2OWJhIn0",
+    "next": "https://api.example.com/v1/messages?limit=20&cursor=eyJ2IjoxLCJrIjpbIjIwMjUtMDktMTRUMTI6MzQ6NTcuMTAwWiIsIjEyM2U0NTY3Il0sIm8iOiJkZXNjIiwicyI6ImNyZWF0ZWRfYXQsaWQiLCJmIjoiZjg2OWJhIn0",
+    "prev": "https://api.example.com/v1/messages?limit=20&cursor=eyJ2IjoxLCJrIjpbIjIwMjUtMDktMTRUMTI6MzQ6NTcuMTAwWiIsIjEyM2U0NTY3Il0sIm8iOiJkZXNjIiwicyI6ImNyZWF0ZWRfYXQsaWQiLCJmIjoiZjg2OWJhIn0"
   }
 }
 ```

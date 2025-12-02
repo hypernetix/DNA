@@ -240,8 +240,18 @@ curl -sS \
   "data": [
     { "id": "01J...", "title": "Disk full", "priority": "high", "status": "open", "createdAt": "2025-08-31T10:05:17.000Z" }
   ],
-  "meta": { "limit": 25, "hasNext": true },
-  "links": { "next": "...after=...", "prev": null }
+  "meta": {
+    "pageInfo": {
+      "nextCursor": "eyJ2IjoxLCJrIjpbIjIwMjUtMDgtMzFUMTA6MDU6MTcuMDAwWiIsIjAxSi4uLiJdLCJvIjoiZGVzYyIsInMiOiJjcmVhdGVkX2F0LGlkIn0",
+      "prevCursor": null,
+      "limit": 25
+    }
+  },
+  "links": {
+    "self": "https://api.example.com/v1/tickets?limit=25&status.in=open,in_progress&sort=-priority,createdAt&fields[tickets]=id,title,priority,status,createdAt",
+    "next": "https://api.example.com/v1/tickets?limit=25&cursor=eyJ2IjoxLCJrIjpbIjIwMjUtMDgtMzFUMTA6MDU6MTcuMDAwWiIsIjAxSi4uLiJdLCJvIjoiZGVzYyIsInMiOiJjcmVhdGVkX2F0LGlkIn0&status.in=open,in_progress&sort=-priority,createdAt&fields[tickets]=id,title,priority,status,createdAt",
+    "prev": null
+  }
 }
 ```
 
