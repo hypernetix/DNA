@@ -20,7 +20,7 @@ This document specifies how to design and implement batch/bulk endpoints in REST
 - **Batch writes**: `POST /resources:batch`
 - **Batch reads**: Use filters on collection endpoints (e.g., `GET /tickets?id.in=01J...,01K...`)
 - **Response**: `207 Multi-Status` (partial success) or specific status code (all same outcome)
-- **Request limit**: Max 100 items per batch (configurable per endpoint)
+- **Request limit**: Default 100 items per batch (configurable per endpoint, must be documented)
 
 ## Request Format
 
@@ -366,9 +366,13 @@ Batch operations support **per-item idempotency** to enable safe retries.
 ### Server Behavior
 
 - Each item's `idempotencyKey` is matched independently
-- Replayed items return the **original response** with original status code
+- Only **successful (2xx) outcomes** are cached and replayed with the original response
+- Error responses (4xx/5xx) are **NOT cached**; retries re-execute to allow fresh validation, permission checks, and recovery from transient failures
 - Mix of new and replayed items is allowed in a single batch
-- Idempotency retention: 1 hour (consistent with single-item operations)
+- **Idempotency retention** (tiered by operation criticality):
+  - Minimum default: 1 hour (sufficient for network retry protection)
+  - Important operations: 24h-7d (e.g., bulk notifications, report generation)
+  - Critical operations: Permanent via DB uniqueness on `idempotencyKey` (e.g., payment processing, invoice creation) → return `409 Conflict` per item if key exists after cache expiry
 
 ### Replayed Item Indication
 
@@ -386,7 +390,7 @@ Batch operations support **per-item idempotency** to enable safe retries.
 
 ## Performance Limits
 
-- **Recommended batch size**: 100 items maximum (configurable per endpoint)
+- **Default maximum batch size**: 100 items. Specific endpoints MAY configure different limits but MUST document the limit clearly.
 - **Timeout**: 30s default (same as single operations)
 - **Payload size**: 1MB limit applies to entire batch request
 - **Rate limiting**: Batch counts as single request; consider separate quotas for batch vs single-item operations
