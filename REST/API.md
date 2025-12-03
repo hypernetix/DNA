@@ -124,11 +124,13 @@ For complete specification see [PAGINATION.md](PAGINATION.md):
 - **No secrets in URLs**; short token TTLs; rotate keys; refresh tokens when needed
 
 ## 10. Rate Limiting & Quotas
-- **Headers** (RFC 9239):
-  - `RateLimit-Limit: 100`
-  - `RateLimit-Remaining: 72`
-  - `RateLimit-Reset: 30`
+- **Headers** (following [IETF RateLimit Draft](https://datatracker.ietf.org/doc/draft-ietf-httpapi-ratelimit-headers/)):
+  - `RateLimit-Policy: "default";q=100;w=3600` (defines quota policy: 100 requests per hour)
+  - `RateLimit: "default";r=72;t=1800` (current status: 72 remaining, resets in 1800 seconds)
 - On 429 also include `Retry-After` (seconds). Quotas are per token by default.
+- **Example with partition key**: `RateLimit-Policy: "peruser";q=100;w=60;pk=:dXNlcjEyMw==:`
+- **Backward compatibility**: For legacy clients, servers **MAY** also return traditional `X-RateLimit-Limit`, `X-RateLimit-Remaining`, and `X-RateLimit-Reset` headers alongside the standard headers during a transition period.
+- **Note**: The IETF draft uses structured field syntax with parameters (not separate headers). Many existing APIs use `X-RateLimit-*` headers, which remains acceptable for backward compatibility.
 
 ## 11. Asynchronous Operations
 - For long tasks return `202 Accepted` + `Location: /jobs/{jobId}`
@@ -174,7 +176,7 @@ For complete specification see [PAGINATION.md](PAGINATION.md):
 Access-Control-Allow-Origin: https://app.example.com
 Access-Control-Allow-Methods: GET,POST,PUT,PATCH,DELETE,OPTIONS
 Access-Control-Allow-Headers: Authorization, Content-Type, Idempotency-Key
-Access-Control-Expose-Headers: ETag, Location, RateLimit-*
+Access-Control-Expose-Headers: ETag, Location, RateLimit, RateLimit-Policy
 ```
 
 - CSRF: only relevant for cookie auth; prefer Bearer in `Authorization` for SPAs
@@ -378,9 +380,9 @@ const resource = await api.createResource({
 
 ## Operational Headers (Quick Reference)
 - Requests may include: `Authorization`, `Idempotency-Key`, `If-Match`, `If-None-Match`, `Accept-Encoding`, `traceparent`, `X-Request-Id`
-- Responses should include: `Content-Type`, `ETag` (when cacheable), `Location` (201/202), `RateLimit-*`, `traceId`, `X-Request-Id`
+- Responses should include: `Content-Type`, `ETag` (when cacheable), `Location` (201/202), `RateLimit`, `RateLimit-Policy`, `traceId`, `X-Request-Id`
 
 ## References
 - RFC 9457 Problem Details: [IETF RFC 9457](https://www.rfc-editor.org/rfc/rfc9457)
-- RFC 9239 RateLimit Fields: [IETF RFC 9239](https://www.rfc-editor.org/rfc/rfc9239)
+- IETF RateLimit Headers Draft: [draft-ietf-httpapi-ratelimit-headers](https://datatracker.ietf.org/doc/draft-ietf-httpapi-ratelimit-headers/)
 - W3C Trace Context: [traceparent](https://www.w3.org/TR/trace-context/)
