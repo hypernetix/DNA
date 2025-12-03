@@ -9,7 +9,7 @@ This document is an actionable, LLM-friendly playbook for building consistent, e
 - [2. Protocol & Content](#2-protocol--content)
 - [3. Resource Modeling & URLs](#3-resource-modeling--urls)
 - [4. JSON Conventions](#4-json-conventions)
-- [5. Pagination, Filtering, Sorting](#5-pagination-filtering-sorting)
+- [5. Pagination, Filtering, Sorting, Field Projection](#5-pagination-filtering-sorting-field-projection)
 - [6. Request Semantics](#6-request-semantics)
 - [7. Error Model (Problem Details)](#7-error-model-problem-details)
 
@@ -78,9 +78,13 @@ This document is an actionable, LLM-friendly playbook for building consistent, e
 }
 ```
 
-## 5. Pagination, Filtering, Sorting
+## 5. Pagination, Filtering, Sorting, Field Projection
 
-For complete cursor pagination specification including OData-style filtering and sorting, see [PAGINATION.md](PAGINATION.md).
+For complete specification see [PAGINATION.md](PAGINATION.md):
+- **Cursor pagination**: Opaque, versioned cursors with `limit` and `cursor` parameters
+- **Filtering**: OData `$filter` with operators (`eq`, `ne`, `gt`, `in`, etc.)
+- **Sorting**: OData `$orderby` (e.g., `priority desc,createdAt asc`)
+- **Field projection**: OData `$select` for sparse field selection (e.g., `$select=id,title,status`)
 
 ## 6. Request Semantics
 - **Create**: `POST /tickets` → 201 + `Location` + resource in body
@@ -226,7 +230,7 @@ Quick reference:
 ```bash
 curl -sS \
   -H "Authorization: Bearer $TOKEN" \
-  "https://api.example.com/v1/tickets?limit=25&after=...&status.in=open,in_progress&sort=-priority,createdAt&fields[tickets]=id,title,priority,status,createdAt"
+  "https://api.example.com/v1/tickets?limit=25&cursor=...&\$filter=status in ('open','in_progress')&\$orderby=priority desc,createdAt asc&\$select=id,title,priority,status,createdAt"
 ```
 
 ```json
