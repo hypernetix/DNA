@@ -114,8 +114,13 @@ For complete specification see [QUERYING.md](QUERYING.md):
 ## 8. Concurrency & Idempotency
 - **Optimistic locking**: Representations carry `ETag` (strong or weak). Clients send `If-Match`. On mismatch → 412.
 - **Idempotency**: Clients may send `Idempotency-Key` on `POST/PATCH/DELETE`.
-  - Server stores `key + request hash` for 1h and returns the original response for retries.
-  - Replays add header: `Idempotency-Replayed: true`.
+  - Server caches **only successful (2xx) responses** to prevent duplicate side effects.
+  - Error responses (4xx/5xx) are NOT cached; retries re-execute to allow fresh validation, permission checks, and recovery from transient failures.
+  - Successful replays return the cached response with header: `Idempotency-Replayed: true`.
+  - **Retention tiers**:
+    - Minimum default: 1 hour (sufficient for network retry protection)
+    - Important operations: 24h-7d (e.g., notifications, reports) - must be documented per endpoint
+    - Critical operations: Permanent via DB uniqueness constraints (e.g., payments, user registration) → return `409 Conflict` with existing resource after initial creation
 
 ## 9. Authentication & Authorization
 - **Auth**: OAuth2/OIDC Bearer tokens in `Authorization: Bearer <token>`
@@ -217,8 +222,15 @@ Quick reference:
 - 5xx Other Server errors
 
 ## 19. Batch & Bulk
-- Batch reads via filters
-- Bulk write: `POST /tickets:batch` up to N items → `207 Multi-Status` with per-item results; idempotency keys per item
+
+For complete batch and bulk operations specification including error formats, atomicity options, and idempotency, see [BATCH.md](BATCH.md).
+
+**Quick Summary:**
+- **Endpoint pattern**: `POST /resources:batch` (default maximum 100 items, configurable per endpoint)
+- **Response**: `207 Multi-Status` (partial success) or specific status code (all same outcome)
+- **Error format**: Full RFC 9457 Problem Details per failed item
+- **Atomicity**: Endpoint-specific (best-effort default, atomic for critical operations)
+- **Idempotency**: Per-item `idempotencyKey` with 1-hour retention
 
 ## 20. OpenAPI & Codegen
 - **Source of truth**: OpenAPI 3.1
