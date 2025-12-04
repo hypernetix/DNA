@@ -80,7 +80,7 @@ This document is an actionable, LLM-friendly playbook for building consistent, e
 
 ## 5. Pagination, Filtering, Sorting, Field Projection
 
-For complete specification see [PAGINATION.md](PAGINATION.md):
+For complete specification see [QUERYING.md](QUERYING.md):
 - **Cursor pagination**: Opaque, versioned cursors with `limit` and `cursor` parameters
 - **Filtering**: OData `$filter` with operators (`eq`, `ne`, `gt`, `in`, etc.)
 - **Sorting**: OData `$orderby` (e.g., `priority desc,createdAt asc`)

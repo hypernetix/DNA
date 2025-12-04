@@ -114,14 +114,16 @@ Allowed `s` tokens (comma-separated): `created_at`, `id`.
   - `$filter` fields (and supported operators per field), and
   - `$orderby` fields (with allowed directions),
   in the generated API spec.
-  - Suggested OpenAPI vendor extension:
+  - Suggested OpenAPI vendor extensions:
 
 ```yaml
-x-pagination:
-  filterFields:
+x-odata-filter:
+  allowedFields:
     created_at: [ge, gt, le, lt, eq]
     id: [eq, in]
-  orderBy:
+
+x-odata-orderby:
+  allowedFields:
     - created_at desc
     - created_at asc
     - id asc
@@ -148,7 +150,7 @@ components:
       schema:
         type: string
       description: |
-        OData filter over allowlisted indexed fields. See x-pagination.filterFields.
+        OData filter over allowlisted indexed fields. See x-odata-filter.allowedFields.
     OrderByParam:
       name: $orderby
       in: query
@@ -157,7 +159,7 @@ components:
         type: string
       example: created_at desc, id desc
       description: |
-        OData order-by over allowlisted indexed fields. See x-pagination.orderBy.
+        OData order-by over allowlisted indexed fields. See x-odata-orderby.allowedFields.
 
 paths:
   /v1/items:
@@ -165,11 +167,12 @@ paths:
       parameters:
         - $ref: '#/components/parameters/FilterParam'
         - $ref: '#/components/parameters/OrderByParam'
-      x-pagination:
-        filterFields:
+      x-odata-filter:
+        allowedFields:
           created_at: [ge, gt, le, lt, eq]
           id: [eq, in]
-        orderBy:
+      x-odata-orderby:
+        allowedFields:
           - created_at desc
           - created_at asc
           - id asc
@@ -468,7 +471,7 @@ When `$select` is omitted, servers return a **default projection**:
 - **Includes**: Common fields (`id`, `type`), core business fields (`title`, `status`), timestamps, small reference IDs
 - **Excludes**: Large text fields, binary data, sensitive fields, expensive computed fields
 
-Default projection documented per resource in OpenAPI using `x-field-projection` vendor extension.
+Default projection documented per resource in OpenAPI using `x-odata-select` vendor extension.
 
 ## Allowlisting & Security
 
@@ -513,18 +516,18 @@ All errors return RFC 9457 Problem Details format.
 
 ## OpenAPI Integration
 
-Document field projection using the `x-field-projection` vendor extension.
+Document field projection using the `x-odata-select` vendor extension.
 
 ### Vendor Extension
 
 ```yaml
-x-field-projection:
-  defaultProjection: [id, title, status, priority, createdAt, updatedAt]
-  selectableFields: [id, title, description, status, priority, createdAt, updatedAt, assigneeId, reporterId]
+x-odata-select:
+  defaultFields: [id, title, status, priority, createdAt, updatedAt]
+  allowedFields: [id, title, description, status, priority, createdAt, updatedAt, assigneeId, reporterId]
   maxFields: 50
 ```
 
-Field types are defined in the resource schema; `x-field-projection` only specifies which fields are selectable.
+Field types are defined in the resource schema; `x-odata-select` only specifies which fields are selectable.
 
 ## Code Examples
 
