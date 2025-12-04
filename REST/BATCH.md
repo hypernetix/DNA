@@ -12,7 +12,6 @@ This document specifies how to design and implement batch/bulk endpoints in REST
 - [Atomicity (Transactional Semantics)](#atomicity-transactional-semantics)
 - [Idempotency](#idempotency)
 - [Performance Limits](#performance-limits)
-- [Large Batch Operations](#large-batch-operations)
 - [Complete Example](#complete-example)
 
 ## Endpoint Pattern
@@ -56,7 +55,7 @@ Content-Type: application/json
 
 ```json
 {
-  "results": [
+  "data": [
     {
       "index": 0,
       "idempotencyKey": "req-1",
@@ -112,7 +111,7 @@ Content-Type: application/json
 
 ```json
 {
-  "results": [
+  "data": [
     {
       "index": 0,
       "idempotencyKey": "req-1",
@@ -143,7 +142,7 @@ Content-Type: application/json
 
 ```json
 {
-  "results": [
+  "data": [
     { "index": 0, "status": 422, "error": { /* Problem Details */ } },
     { "index": 1, "status": 422, "error": { /* Problem Details */ } }
   ],
@@ -390,66 +389,10 @@ Batch operations support **per-item idempotency** to enable safe retries.
 
 ## Performance Limits
 
-- **Default maximum batch size**: 100 items. Specific endpoints MAY configure different limits but MUST document the limit clearly.
-- **Timeout**: 30s default (same as single operations)
-- **Payload size**: 1MB limit applies to entire batch request
-- **Rate limiting**: Batch counts as single request; consider separate quotas for batch vs single-item operations
-
-## Large Batch Operations
-
-For operations requiring more than 100 items:
-
-### Option 1: Client-Side Chunking (Recommended)
-
-Clients split large batches into multiple smaller requests (50-100 items each):
-- Maintains full error detail per item
-- Better progress feedback
-- Natural retry boundaries
-- Simpler server implementation
-
-### Option 2: Asynchronous Processing
-
-For very large batches (1000+ items), use async job pattern:
-
-**Submit Job:**
-```http
-POST /v1/tickets:batch
-Content-Type: application/json
-
-{ "items": [ /* 1000+ items */ ] }
-```
-
-**Response:**
-```http
-HTTP/1.1 202 Accepted
-Location: /v1/jobs/01JXYZ...
-```
-
-**Poll Job Status:**
-```http
-GET /v1/jobs/01JXYZ...
-```
-
-```json
-{
-  "id": "01JXYZ...",
-  "status": "running",
-  "progress": {
-    "total": 1500,
-    "processed": 850,
-    "succeeded": 820,
-    "failed": 30
-  },
-  "resultsUrl": "/v1/jobs/01JXYZ.../results"
-}
-```
-
-**Paginate Results:**
-```http
-GET /v1/jobs/01JXYZ.../results?limit=100&after=...
-```
-
-See [api.md#asynchronous-operations](api.md#11-asynchronous-operations) for complete async job specifications.
+- **Default maximum batch size**: 100 items per request (configurable per endpoint)
+- **Default timeout**: 30s (same as single operations, configurable per endpoint)
+- **Default maximum payload size**: 1MB for entire batch request (configurable per endpoint)
+- **Rate limiting**: Batch operations count as a single request; consider separate quotas for batch vs single-item operations
 
 ## Complete Example
 
@@ -493,15 +436,14 @@ curl -X POST https://api.example.com/v1/tickets:batch \
 ```http
 HTTP/1.1 207 Multi-Status
 Content-Type: application/json
-RateLimit-Limit: 100
-RateLimit-Remaining: 99
-RateLimit-Reset: 60
+RateLimit-Policy: "default";q=100;w=3600
+RateLimit: "default";r=99;t=3540
 traceId: 01JXYZ...Z
 ```
 
 ```json
 {
-  "results": [
+  "data": [
     {
       "index": 0,
       "idempotencyKey": "req-1",
