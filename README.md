@@ -16,9 +16,25 @@ These are opinionated, concise, and LLM-friendly guidelines designed to create c
 - Optional stack-specific recommendations: Rust backend and React frontend
 
 ## Start Here
-- Core API rules (any stack): see [API.md](./REST/API.md)
-- Backend (Rust) specifics (optional): see [RUST.md](./languages/RUST.md)
-- Frontend (React) usage patterns (optional): see [REACT.md](./languages/REACT.md)
+
+### REST APIs
+- Core REST API rules: [REST/API.md](./REST/API.md)
+- Pagination specification: [REST/PAGINATION.md](./REST/PAGINATION.md)
+- Status codes: [REST/STATUS_CODES.md](./REST/STATUS_CODES.md)
+- Versioning & deprecation: [REST/VERSIONING.md](./REST/VERSIONING.md)
+
+### Alternative API Patterns
+- GraphQL: [GraphQL/API.md](./GraphQL/API.md)
+- gRPC: [gRPC/API.md](./gRPC/API.md)
+- AsyncAPI & Event-Driven: [AsyncAPI/API.md](./AsyncAPI/API.md)
+
+### Language-Specific Guides
+- Backend (Rust): [languages/RUST.md](./languages/RUST.md)
+- Frontend (React): [languages/REACT.md](./languages/REACT.md)
+
+### Development Practices
+- Testing Strategy: [Testing/STRATEGY.md](./Testing/STRATEGY.md)
+- Code Review: [CodeReview/GUIDELINES.md](./CodeReview/GUIDELINES.md)
 
 ## Key Decisions & Defaults
 - **JSON**: camelCase; envelope `{ data, meta, links }`; omit absent fields (avoid nulls)

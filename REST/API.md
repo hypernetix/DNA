@@ -117,11 +117,94 @@ For complete specification see [PAGINATION.md](PAGINATION.md):
   - Server stores `key + request hash` for 1h and returns the original response for retries.
   - Replays add header: `Idempotency-Replayed: true`.
 
+### Retry Strategies
+
+**Client-Side Retries**:
+- **Exponential backoff**: Start with 1s, double each retry, max 30s
+- **Jitter**: Add random ±25% to prevent thundering herd
+- **Max attempts**: 3-5 retries for transient errors (5xx, 429, 408, 504)
+- **Circuit breaker**: Stop retrying after consecutive failures
+
+**Retry-After Header**:
+- Server includes `Retry-After: 30` (seconds) on 429/503
+- Client MUST respect this value before retrying
+- For 503, also check `Retry-After` in response body
+
+**Idempotency with Retries**:
+- Always include `Idempotency-Key` for state-changing operations
+- Server deduplicates by `key + request hash`
+- Retry with same key returns original response
+- Different request with same key → 409 Conflict
+
+**Timeout Handling**:
+- Client timeout: 30s for most operations, 5min for async jobs
+- Server timeout: 30s handler timeout, use async jobs for longer work
+- Connection timeout: 10s for initial connection
+
 ## 9. Authentication & Authorization
-- **Auth**: OAuth2/OIDC Bearer tokens in `Authorization: Bearer <token>`
-- **Scopes/permissions**: Document per endpoint; insufficient → 403
-- **Service-to-service**: mTLS optional
+
+### Authentication Methods
+
+**OAuth2/OIDC (Primary)**:
+- Bearer tokens in `Authorization: Bearer <token>`
+- Short-lived access tokens (15-60min)
+- Refresh tokens for long-term access
+- PKCE for public clients
+- Authorization Code flow for web apps
+- Client Credentials flow for service-to-service
+- Token introspection endpoint for validation
+
+**API Keys (Alternative)**:
+- Header: `X-API-Key: <key>` or `Authorization: ApiKey <key>`
+- Query param: `?api_key=<key>` (less secure, avoid if possible)
+- Format: `ak_live_` or `ak_test_` prefix for environment identification
+- Scoped to specific resources/operations
+- Include creation date and expiration in key metadata
+- Support key rotation without downtime
+
+**JWT Tokens**:
+- Self-contained tokens with claims
+- Verify signature and expiration
+- Include `sub` (subject), `aud` (audience), `exp` (expiration), `iat` (issued at)
+- Use RS256 or ES256 for signature verification
+- Include `jti` (JWT ID) for revocation tracking
+- Validate `nbf` (not before) claim if present
+
+**mTLS (Service-to-Service)**:
+- Mutual TLS for service authentication
+- Client certificates for service identity
+- Certificate-based authorization
+- Certificate pinning for enhanced security
+- Automatic certificate rotation
+
+### Authorization
+
+**Scopes & Permissions**:
+- Document required scopes per endpoint
+- Insufficient permissions → 403 Forbidden
+- Scope format: `resource:action` (e.g., `users:read`, `tickets:write`)
+- Support scope hierarchies (e.g., `users:*` includes `users:read`, `users:write`)
+- Include scope descriptions in token introspection response
+
+**Role-Based Access Control (RBAC)**:
+- Roles: `admin`, `user`, `readonly`, `service`
+- Permissions mapped to roles
+- Hierarchical permissions (admin > user > readonly)
+- Support role inheritance
+- Document role-to-permission mappings in API documentation
+
+**Attribute-Based Access Control (ABAC)**:
+- Context-aware authorization
+- Resource attributes + user attributes + environment
+- Dynamic policy evaluation
+- Examples: time-based access, IP-based restrictions, resource ownership
+- Policy decision points (PDP) for centralized authorization
+
+### Security Best Practices
 - **No secrets in URLs**; short token TTLs; rotate keys; refresh tokens when needed
+- API keys: 90-day rotation, immediate revocation capability
+- Rate limiting per API key/token
+- Audit logging for all auth events
 
 ## 10. Rate Limiting & Quotas
 - **Headers** (following [IETF RateLimit Draft](https://datatracker.ietf.org/doc/draft-ietf-httpapi-ratelimit-headers/)):
@@ -156,6 +239,12 @@ For complete specification see [PAGINATION.md](PAGINATION.md):
 - **Security**: `X-Signature` HMAC-SHA256 over raw body with shared secret; include `X-Timestamp` (±5 min skew)
 - **Retries**: Exponential backoff for ≥24h; dead-letter queue
 - **Idempotency**: Include `eventId`; receivers dedupe
+- **Replay protection**: Validate `X-Timestamp` and reject old events (>5 min)
+- **Signature verification**: `HMAC-SHA256(secret, timestamp + '.' + body)` compare with `X-Signature`
+- **Delivery guarantees**: At-least-once delivery with retry mechanism
+- **Webhook management**: CRUD endpoints for webhook subscriptions
+- **Event filtering**: Allow subscribers to filter by event types
+- **Webhook testing**: Provide test event endpoint for validation
 
 ## 13. Internationalization, Numbers & Time
 - All timestamps UTC (`Z`), always include milliseconds `.SSS` (e.g., `2025-09-01T20:00:00.000Z`). If timezone needed, add separate `timezone` (IANA name)
@@ -195,6 +284,8 @@ Access-Control-Expose-Headers: ETag, Location, RateLimit, RateLimit-Policy
 - **Client compatibility**: Must ignore unknown fields, handle new enum values gracefully, not rely on field order
 - **Deprecation headers**: `Deprecation: true`, `Sunset: <RFC 8594 date>`, and `Link: <doc>; rel="deprecation"`
 
+For complete versioning strategy, compatibility rules, and deprecation practices, see [VERSIONING.md](VERSIONING.md).
+
 ## 18. Canonical Status Codes
 
 For complete HTTP status code definitions and application error mappings, see [STATUS_CODES.md](STATUS_CODES.md).
@@ -225,6 +316,19 @@ Quick reference:
 - For Rust backend specifics (utoipa, serde, validator), see `RUST.md`
 - Client SDK: generate TypeScript types (`openapi-typescript`) and React hooks (TanStack Query) with fetch/axios adapter
 - Keep schemas DRY via shared components; provide example payloads for every operation
+- All endpoints must have summary and description
+- Include request/response examples for every operation
+- Document all error responses with Problem Details format
+- Specify required authentication and scopes per endpoint
+- Include rate limit information in operation metadata
+- Use `$ref` for reusable components
+- Define discriminators for polymorphic types
+- Include format validators (email, uuid, date-time)
+- Add `x-` vendor extensions for custom metadata
+- Generate type-safe clients for TypeScript, Python, Go, Java
+- Include retry logic and error handling in generated code
+- Support custom headers (Idempotency-Key, tracing)
+- Generate mock servers for testing
 
 ## 21. Example Endpoints
 - **List Tickets**
@@ -375,6 +479,15 @@ const resource = await api.createResource({
   priority: 'medium'
 });
 ```
+
+---
+
+## Alternative API Patterns
+
+For non-REST API patterns, see:
+- **GraphQL**: [GraphQL/API.md](../GraphQL/API.md) - Schema design, N+1 prevention, directives, persisted queries
+- **gRPC**: [gRPC/API.md](../gRPC/API.md) - Protocol Buffers, streaming, service mesh integration
+- **AsyncAPI**: [AsyncAPI/API.md](../AsyncAPI/API.md) - Event-driven architecture, CQRS, saga patterns
 
 ---
 

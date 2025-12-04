@@ -69,8 +69,21 @@ Return a consistent envelope:
 }
 ```
 
+**Note**: This format is specific to cursor pagination. For consistency with the main API envelope format `{ data, meta, links }`, you may also use:
+
+```
+{
+  "data": [ ... ],
+  "meta": {
+    "limit": 20,
+    "nextCursor": "<opaque>",
+    "prevCursor": "<opaque>"
+  }
+}
+```
+
 Rules:
-- `items` are in the endpoint’s canonical sort order (do not reverse for backward navigation).
+- `items` are in the endpoint's canonical sort order (do not reverse for backward navigation).
 - `next_cursor` points to the position immediately after the last item in `items` and may be omitted if there is no next page.
 - `prev_cursor` points to the position immediately before the first item in `items` and may be omitted on the first page.
 - Do not include `total_count` in cursor pagination responses.
