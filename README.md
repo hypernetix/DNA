@@ -71,7 +71,7 @@ curl -o docs/rust-api-guide.md https://raw.githubusercontent.com/hypernetix/DNA/
 # API Development Guidelines
 
 ## REST API Standards
-Follow Hypernetix DNA guidelines for all API development:
+Follow DNA guidelines for all API development:
 - Use the guidelines from docs/DNA/REST/API.md as the primary reference
 - JSON envelope format: `{ data, meta, links }`
 - camelCase naming for JSON fields
@@ -108,7 +108,7 @@ Refer to docs/DNA/REST/ for complete implementation examples and patterns.
 #### Windsurf Rules (`.windsurfrules`)
 ```yaml
 api_standards:
-  framework: "Hypernetix API Guidelines"
+  framework: "DNA API Guidelines"
   reference: "docs/DNA/REST/API.md"
 
 conventions:
@@ -167,13 +167,13 @@ required_patterns:
 
 #### Makefile Integration
 ```makefile
-# Update Hypernetix Guidelines
+# Update DNA Guidelines
 update-guidelines:
 	git submodule update --remote docs/DNA
 
 # Validate API against guidelines
 validate-api:
-	@echo "Checking API compliance with Hypernetix API guidelines..."
+	@echo "Checking API compliance with DNA API guidelines..."
 	# Add your validation scripts here
 ```
 

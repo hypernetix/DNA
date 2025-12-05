@@ -1,6 +1,6 @@
 ## Cursor Pagination Spec
 
-This document defines a consistent, implementation-friendly contract for cursor-based pagination referenced by Hypernetix API Guidelines.
+This document defines a consistent, implementation-friendly contract for cursor-based pagination referenced by the API Guidelines.
 
 ## Goals
 

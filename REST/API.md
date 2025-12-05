@@ -1,4 +1,4 @@
-# Hypernetix REST API Guideline
+# REST API Guideline
 
 This document is an actionable, LLM-friendly playbook for building consistent, evolvable REST APIs
 
