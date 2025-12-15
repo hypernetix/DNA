@@ -22,7 +22,7 @@ use time::OffsetDateTime;
 use uuid::Uuid; // enable the v7 feature in Cargo.toml
 
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
-#[serde(rename_all = "camelCase")]
+#[serde(rename_all = "snake_case")]
 pub struct Ticket {
     pub id: Uuid,
     pub title: String,
@@ -38,11 +38,11 @@ pub struct Ticket {
 }
 
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
-#[serde(rename_all = "camelCase")]
+#[serde(rename_all = "snake_case")]
 pub enum TicketPriority { Low, Medium, High }
 
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
-#[serde(rename_all = "camelCase")]
+#[serde(rename_all = "snake_case")]
 pub enum TicketStatus { Open, InProgress, Resolved, Closed }
 ```
 
@@ -54,7 +54,7 @@ use utoipa::ToSchema;
 
 /// RFC 9457 Problem Details
 #[derive(Debug, Serialize, ToSchema)]
-#[serde(rename_all = "camelCase")]
+#[serde(rename_all = "snake_case")]
 pub struct Problem {
     #[schema(example = "https://api.example.com/errors/validation")]
     pub r#type: String,
@@ -65,7 +65,6 @@ pub struct Problem {
     pub detail: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub instance: Option<String>,
-    #[serde(rename = "traceId")]
     pub trace_id: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub errors: Option<Vec<ValidationError>>,
@@ -94,11 +93,11 @@ pub struct ListParams {
 }
 
 #[derive(Debug, Serialize, ToSchema)]
-#[serde(rename_all = "camelCase")]
+#[serde(rename_all = "snake_case")]
 pub struct Envelope<T> { pub data: T, pub meta: Meta, pub links: Links }
 
 #[derive(Debug, Serialize, ToSchema)]
-#[serde(rename_all = "camelCase")]
+#[serde(rename_all = "snake_case")]
 pub struct Meta { pub limit: u16, pub has_next: bool, pub has_prev: bool }
 
 #[derive(Debug, Serialize, ToSchema)]
