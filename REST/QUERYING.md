@@ -186,7 +186,7 @@ paths:
 ```
 {
   "v": 1,                 // version
-  "k": [<primaryKey>, <tiebreakerKey>],
+  "k": [<primary_key>, <tiebreaker_key>],
   "o": "desc|asc",       // order of the primary key
   "s": "created_at,id",  // sort keys used to build the cursor
   "f": "<filter-hash>"    // hash of normalized filters (optional but recommended)
@@ -214,15 +214,15 @@ Guidelines:
 
 Assume canonical sort `created_at DESC, id DESC`.
 
-1) Normalize and clamp `limit` to [1, MAX_LIMIT]. Use `pageSize = min(request.limit || 20, 100)`.
-2) If `cursor` is provided, decode it to `(cursorCreatedAt, cursorId)`.
+1) Normalize and clamp `limit` to [1, MAX_LIMIT]. Use `page_size = min(request.limit || 20, 100)`.
+2) If `cursor` is provided, decode it to `(cursor_created_at, cursor_id)`.
 3) Build the predicate for forward pagination in canonical order:
-   - For DESC order: `(created_at, id) < (cursorCreatedAt, cursorId)`.
-   - For ASC order:  `(created_at, id) > (cursorCreatedAt, cursorId)`.
+   - For DESC order: `(created_at, id) < (cursor_created_at, cursor_id)`.
+   - For ASC order:  `(created_at, id) > (cursor_created_at, cursor_id)`.
 4) Apply filters first, then the cursor predicate.
 5) Order by the canonical sort.
-6) Fetch `pageSize + 1` rows.
-7) Trim `items = rows.slice(0, pageSize)`.
+6) Fetch `page_size + 1` rows.
+7) Trim `items = rows.slice(0, page_size)`.
 8) Compute cursors:
    - `next_cursor` from the last item in `items`.
    - `prev_cursor` from the first item in `items`.
@@ -493,7 +493,7 @@ GET /v1/tickets?limit=2&$select=id,title,status
     { "id": "01J...", "title": "Database timeout", "status": "open" },
     { "id": "01J...", "title": "Login error", "status": "in_progress" }
   ],
-  "meta": { "limit": 2, "hasNext": true },
+  "meta": { "limit": 2, "has_next": true },
   "links": { "next": "/v1/tickets?limit=2&cursor=..." }
 }
 ```
@@ -508,11 +508,11 @@ Cursors encode `$filter`, `$orderby`, **and `$select`** to ensure consistent res
 
 All errors return RFC 9457 Problem Details format.
 
-**`INVALID_FIELD` (400)**: Requested field not in allowlist. Returns `invalidFields` array and `allowedFields` array.
+**`INVALID_FIELD` (400)**: Requested field not in allowlist. Returns `invalid_fields` array and `allowed_fields` array.
 
-**`TOO_MANY_FIELDS` (400)**: Exceeded max field limit (default 50). Returns `maxFields` integer and `requestedFields` integer.
+**`TOO_MANY_FIELDS` (400)**: Exceeded max field limit (default 50). Returns `max_fields` integer and `requested_fields` integer.
 
-**`FIELD_SELECTION_MISMATCH` (400)**: Cannot change `$select` during pagination. Returns `cursorSelect` string and `requestSelect` string.
+**`FIELD_SELECTION_MISMATCH` (400)**: Cannot change `$select` during pagination. Returns `cursor_select` string and `request_select` string.
 
 ## OpenAPI Integration
 
@@ -522,8 +522,8 @@ Document field projection using the `x-odata-select` vendor extension.
 
 ```yaml
 x-odata-select:
-  defaultFields: [id, title, status, priority, createdAt, updatedAt]
-  allowedFields: [id, title, description, status, priority, createdAt, updatedAt, assigneeId, reporterId]
+  defaultFields: [id, title, status, priority, created_at, updated_at]
+  allowedFields: [id, title, description, status, priority, created_at, updated_at, assignee_id, reporter_id]
   maxFields: 50
 ```
 

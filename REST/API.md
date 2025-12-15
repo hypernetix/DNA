@@ -55,15 +55,15 @@ This document is an actionable, LLM-friendly playbook for building consistent, e
 - **Idempotency**: `Idempotency-Key` header on unsafe methods (see §7)
 
 ## 3. Resource Modeling & URLs
-- **Nouns, plural**: `/users`, `/tickets`, `/tickets/{ticketId}`
-- **Hierarchy if strict ownership**: `/users/{userId}/keys`
-- **Prefer top-level + filters** over deep nesting: `/tickets?assigneeId=...`
+- **Nouns, plural**: `/users`, `/tickets`, `/tickets/{ticket_id}`
+- **Hierarchy if strict ownership**: `/users/{user_id}/keys`
+- **Prefer top-level + filters** over deep nesting: `/tickets?assignee_id=...`
 - **Identifiers**: `uuidv7` (or `ulid`). JSON field: `id`
 - **Timestamps**: ISO-8601 UTC with `Z`, always include milliseconds `.SSS` (e.g., `2025-09-01T20:00:00.000Z`)
-- **Standard fields**: `createdAt`, `updatedAt`, optional `deletedAt`
+- **Standard fields**: `created_at`, `updated_at`, optional `deleted_at`
 
 ## 4. JSON Conventions
-- **Naming**: camelCase (ergonomic in React/TS)
+- **Naming**: snake_case (consistent with backend conventions and databases)
 - **Nullability**: Prefer omitting absent fields over `null`
 - **Booleans & enums**: Strongly typed; never stringly booleans
 - **Money**: Integer minor units + currency code
@@ -83,14 +83,14 @@ This document is an actionable, LLM-friendly playbook for building consistent, e
 For complete specification see [QUERYING.md](QUERYING.md):
 - **Cursor pagination**: Opaque, versioned cursors with `limit` and `cursor` parameters
 - **Filtering**: OData `$filter` with operators (`eq`, `ne`, `gt`, `in`, etc.)
-- **Sorting**: OData `$orderby` (e.g., `priority desc,createdAt asc`)
+- **Sorting**: OData `$orderby` (e.g., `priority desc,created_at asc`)
 - **Field projection**: OData `$select` for sparse field selection (e.g., `$select=id,title,status`)
 
 ## 6. Request Semantics
 - **Create**: `POST /tickets` → 201 + `Location` + resource in body
 - **Partial update**: `PATCH /tickets/{id}` (JSON Merge Patch)
 - **Replace**: `PUT /tickets/{id}` (complete representation)
-- **Delete**: `DELETE /tickets/{id}` → 204; if soft-delete, return 200 with `deletedAt`
+- **Delete**: `DELETE /tickets/{id}` → 204; if soft-delete, return 200 with `deleted_at`
 
 ## 7. Error Model (Problem Details)
 - **Always** return RFC 9457 Problem Details for 4xx/5xx
@@ -105,7 +105,7 @@ For complete specification see [QUERYING.md](QUERYING.md):
   "errors": [
     { "field": "email", "code": "format", "message": "must be a valid email" }
   ],
-  "traceId": "01J...Z"
+  "trace_id": "01J...Z"
 }
 ```
 
@@ -138,7 +138,7 @@ For complete specification see [QUERYING.md](QUERYING.md):
 - **Note**: The IETF draft uses structured field syntax with parameters (not separate headers). Many existing APIs use `X-RateLimit-*` headers, which remains acceptable for backward compatibility.
 
 ## 11. Asynchronous Operations
-- For long tasks return `202 Accepted` + `Location: /jobs/{jobId}`
+- For long tasks return `202 Accepted` + `Location: /jobs/{job_id}`
 - **Job resource** example:
 
 ```json
@@ -148,19 +148,19 @@ For complete specification see [QUERYING.md](QUERYING.md):
   "percent": 35,
   "result": {},
   "error": {},
-  "createdAt": "...",
-  "updatedAt": "..."
+  "created_at": "...",
+  "updated_at": "..."
 }
 ```
 
 - Clients poll `GET /jobs/{id}` or subscribe via SSE/WebSocket if available
 
 ## 12. Webhooks (Outbound)
-- **Event shape**: `eventType`, `id`, `createdAt`, `data`
+- **Event shape**: `event_type`, `id`, `created_at`, `data`
 - **Delivery**: POST JSON to subscriber URL
 - **Security**: `X-Signature` HMAC-SHA256 over raw body with shared secret; include `X-Timestamp` (±5 min skew)
 - **Retries**: Exponential backoff for ≥24h; dead-letter queue
-- **Idempotency**: Include `eventId`; receivers dedupe
+- **Idempotency**: Include `event_id`; receivers dedupe
 
 ## 13. Internationalization, Numbers & Time
 - All timestamps UTC (`Z`), always include milliseconds `.SSS` (e.g., `2025-09-01T20:00:00.000Z`). If timezone needed, add separate `timezone` (IANA name)
@@ -188,9 +188,9 @@ Access-Control-Expose-Headers: ETag, Location, RateLimit, RateLimit-Policy
 - Content Security Policy on the app domain; avoid wildcard `*/*`
 
 ## 16. Observability & Diagnostics
-- **Tracing**: accept/propagate `traceparent` (W3C). Emit `traceId` header on all responses
+- **Tracing**: accept/propagate `traceparent` (W3C). Emit `trace_id` header on all responses
 - **Request ID**: honor `X-Request-Id` or generate one
-- **Structured logs**: JSON per request: `traceId`, `requestId`, `userId`, `path`, `status`, `durationMs`, `bytes`
+- **Structured logs**: JSON per request: `trace_id`, `request_id`, `user_id`, `path`, `status`, `duration_ms`, `bytes`
 - **Metrics**: RED/USE per route, with p50/p90/p99
 
 ## 17. Versioning & Deprecation
@@ -230,7 +230,7 @@ For complete batch and bulk operations specification including error formats, at
 - **Response**: `207 Multi-Status` (partial success) or specific status code (all same outcome)
 - **Error format**: Full RFC 9457 Problem Details per failed item
 - **Atomicity**: Endpoint-specific (best-effort default, atomic for critical operations)
-- **Idempotency**: Per-item `idempotencyKey` with 1-hour retention
+- **Idempotency**: Per-item `idempotency_key` with 1-hour retention
 
 ## 20. OpenAPI & Codegen
 - **Source of truth**: OpenAPI 3.1
@@ -244,15 +244,15 @@ For complete batch and bulk operations specification including error formats, at
 ```bash
 curl -sS \
   -H "Authorization: Bearer $TOKEN" \
-  "https://api.example.com/v1/tickets?limit=25&cursor=...&\$filter=status in ('open','in_progress')&\$orderby=priority desc,createdAt asc&\$select=id,title,priority,status,createdAt"
+  "https://api.example.com/v1/tickets?limit=25&cursor=...&\$filter=status in ('open','in_progress')&\$orderby=priority desc,created_at asc&\$select=id,title,priority,status,created_at"
 ```
 
 ```json
 {
   "data": [
-    { "id": "01J...", "title": "Disk full", "priority": "high", "status": "open", "createdAt": "2025-08-31T10:05:17.000Z" }
+    { "id": "01J...", "title": "Disk full", "priority": "high", "status": "open", "created_at": "2025-08-31T10:05:17.000Z" }
   ],
-  "meta": { "limit": 25, "hasNext": true },
+  "meta": { "limit": 25, "has_next": true },
   "links": { "next": "...after=...", "prev": null }
 }
 ```
@@ -355,8 +355,8 @@ Each endpoint must be comprehensively documented to serve both human developers 
     "priority": "medium",
     "category": "string",
     "status": "active",
-    "createdAt": "2024-01-15T10:30:00Z",
-    "updatedAt": "2024-01-15T10:30:00Z"
+    "created_at": "2024-01-15T10:30:00Z",
+    "updated_at": "2024-01-15T10:30:00Z"
   },
   "meta": { "version": "1.0" },
   "links": {

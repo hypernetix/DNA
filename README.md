@@ -21,9 +21,9 @@ These are opinionated, concise, and LLM-friendly guidelines designed to create c
 - Frontend (React) usage patterns (optional): see [REACT.md](./languages/REACT.md)
 
 ## Key Decisions & Defaults
-- **JSON**: camelCase; envelope `{ data, meta, links }`; omit absent fields (avoid nulls)
+- **JSON**: snake_case; envelope `{ data, meta, links }`; omit absent fields (avoid nulls)
 - **Timestamps**: ISO-8601 UTC with `Z`, always include milliseconds (e.g., `2025-09-01T20:00:00.000Z`)
-- **Filtering**: `field.op=value` (omit `op` for eq). Example: `status.in=open,in_progress&createdAt.gte=...`
+- **Filtering**: `field.op=value` (omit `op` for eq). Example: `status.in=open,in_progress&created_at.gte=...`
 - **Pagination**: cursor-first (`limit`, `after`/`before`); default `25`, max `200`
 - **Errors**: RFC 9457 Problem Details (`application/problem+json`)
 - **Concurrency**: `ETag` + `If-Match` (412 on mismatch)
@@ -74,7 +74,7 @@ curl -o docs/rust-api-guide.md https://raw.githubusercontent.com/hypernetix/DNA/
 Follow DNA guidelines for all API development:
 - Use the guidelines from docs/DNA/REST/API.md as the primary reference
 - JSON envelope format: `{ data, meta, links }`
-- camelCase naming for JSON fields
+- snake_case naming for JSON fields
 - ISO-8601 timestamps with milliseconds: `2025-01-14T10:30:15.123Z`
 - Cursor-based pagination with `limit`, `after`, `before` parameters
 - Filter syntax: `field.op=value` (e.g., `status.in=open,urgent`)
@@ -89,7 +89,7 @@ When generating API code:
 3. Add OpenAPI documentation with `utoipa` annotations
 4. Include request/response examples in documentation
 5. Use UUID v7 for all resource identifiers
-6. Implement soft deletes with `deletedAt` timestamps
+6. Implement soft deletes with `deleted_at` timestamps
 7. Add proper CORS configuration for web clients
 8. Include tracing and observability headers
 
@@ -114,7 +114,7 @@ api_standards:
 conventions:
   json_format:
     envelope: "{ data, meta, links }"
-    naming: "camelCase"
+    naming: "snake_case"
     timestamps: "ISO-8601 with milliseconds (.SSS)"
 
   pagination:
@@ -125,12 +125,12 @@ conventions:
   filtering:
     syntax: "field.op=value"
     operators: ["eq", "ne", "lt", "lte", "gt", "gte", "in", "nin", "contains"]
-    examples: ["status.in=open,urgent", "createdAt.gte=2025-01-01T00:00:00.000Z"]
+    examples: ["status.in=open,urgent", "created_at.gte=2025-01-01T00:00:00.000Z"]
 
   errors:
     format: "RFC 9457 Problem Details"
     content_type: "application/problem+json"
-    required_fields: ["type", "title", "status", "traceId"]
+    required_fields: ["type", "title", "status", "trace_id"]
 
   concurrency:
     method: "ETags with If-Match headers"
@@ -156,7 +156,7 @@ code_generation:
 
 required_patterns:
   - "UUID v7 for all resource identifiers"
-  - "Soft deletes with deletedAt timestamps"
+  - "Soft deletes with deleted_at timestamps"
   - "Request tracing with traceparent headers"
   - "Rate limiting with RateLimit-* headers"
   - "CORS configuration for web clients"

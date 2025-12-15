@@ -27,14 +27,14 @@ This document specifies how to design and implement batch/bulk endpoints in REST
 {
   "items": [
     {
-      "idempotencyKey": "req-1",
+      "idempotency_key": "req-1",
       "data": {
         "title": "Fix login bug",
         "priority": "high"
       }
     },
     {
-      "idempotencyKey": "req-2",
+      "idempotency_key": "req-2",
       "data": {
         "title": "Update documentation",
         "priority": "medium"
@@ -58,15 +58,15 @@ Content-Type: application/json
   "data": [
     {
       "index": 0,
-      "idempotencyKey": "req-1",
+      "idempotency_key": "req-1",
       "status": 201,
       "data": {
         "id": "01J...",
         "title": "Fix login bug",
         "priority": "high",
         "status": "open",
-        "createdAt": "2025-09-01T20:00:00.000Z",
-        "updatedAt": "2025-09-01T20:00:00.000Z"
+        "created_at": "2025-09-01T20:00:00.000Z",
+        "updated_at": "2025-09-01T20:00:00.000Z"
       },
       "headers": {
         "Location": "/v1/tickets/01J...",
@@ -75,7 +75,7 @@ Content-Type: application/json
     },
     {
       "index": 1,
-      "idempotencyKey": "req-2",
+      "idempotency_key": "req-2",
       "status": 422,
       "error": {
         "type": "https://api.example.com/errors/validation",
@@ -90,7 +90,7 @@ Content-Type: application/json
             "message": "must be low, medium, or high"
           }
         ],
-        "traceId": "01JXYZ...Z-item-1"
+        "trace_id": "01JXYZ...Z-item-1"
       }
     }
   ],
@@ -114,13 +114,13 @@ Content-Type: application/json
   "data": [
     {
       "index": 0,
-      "idempotencyKey": "req-1",
+      "idempotency_key": "req-1",
       "status": 201,
       "data": { "id": "01J...", "title": "..." }
     },
     {
       "index": 1,
-      "idempotencyKey": "req-2",
+      "idempotency_key": "req-2",
       "status": 201,
       "data": { "id": "01K...", "title": "..." }
     }
@@ -171,7 +171,7 @@ Each failed item receives **complete RFC 9457 Problem Details** for consistency 
 - `type` - Error type URL
 - `title` - Short error description
 - `status` - HTTP status code for this item
-- `traceId` - Unique trace identifier for this item
+- `trace_id` - Unique trace identifier for this item
 
 ### Optional Fields
 - `detail` - Detailed explanation
@@ -183,7 +183,7 @@ Each failed item receives **complete RFC 9457 Problem Details** for consistency 
 ```json
 {
   "index": 1,
-  "idempotencyKey": "req-2",
+  "idempotency_key": "req-2",
   "status": 422,
   "error": {
     "type": "https://api.example.com/errors/validation",
@@ -195,7 +195,7 @@ Each failed item receives **complete RFC 9457 Problem Details** for consistency 
       { "field": "email", "code": "format", "message": "must be a valid email" },
       { "field": "priority", "code": "enum", "message": "must be low, medium, or high" }
     ],
-    "traceId": "01JXYZ...Z-item-1"
+    "trace_id": "01JXYZ...Z-item-1"
   }
 }
 ```
@@ -205,7 +205,7 @@ Each failed item receives **complete RFC 9457 Problem Details** for consistency 
 ```json
 {
   "index": 2,
-  "idempotencyKey": "req-3",
+  "idempotency_key": "req-3",
   "status": 404,
   "error": {
     "type": "https://api.example.com/errors/not-found",
@@ -213,7 +213,7 @@ Each failed item receives **complete RFC 9457 Problem Details** for consistency 
     "status": 404,
     "detail": "Ticket with id '01JOLD...' does not exist",
     "instance": "https://api.example.com/req/01JXYZ...Z#item-2",
-    "traceId": "01JXYZ...Z-item-2"
+    "trace_id": "01JXYZ...Z-item-2"
   }
 }
 ```
@@ -242,10 +242,10 @@ Content-Type: application/problem+json
       "type": "duplicate",
       "field": "email",
       "value": "user@example.com",
-      "itemIndices": [1, 3]
+      "item_indices": [1, 3]
     }
   ],
-  "traceId": "01JXYZ...Z"
+  "trace_id": "01JXYZ...Z"
 }
 ```
 
@@ -256,15 +256,15 @@ Conflicts with existing resources (not within the batch) are treated as per-item
 ```json
 {
   "index": 2,
-  "idempotencyKey": "req-3",
+  "idempotency_key": "req-3",
   "status": 409,
   "error": {
     "type": "https://api.example.com/errors/conflict",
     "title": "Resource conflict",
     "status": 409,
     "detail": "A ticket with title 'Fix login bug' already exists",
-    "existingResourceId": "01HOLD...",
-    "traceId": "01JXYZ...Z-item-2"
+    "existing_resource_id": "01HOLD...",
+    "trace_id": "01JXYZ...Z-item-2"
   }
 }
 ```
@@ -311,13 +311,13 @@ Content-Type: application/problem+json
   "title": "Batch operation failed",
   "status": 422,
   "detail": "Transaction rolled back due to validation failure at item 3",
-  "failedItemIndex": 3,
-  "itemError": {
+  "failed_item_index": 3,
+  "item_error": {
     "errors": [
       { "field": "amount", "code": "range", "message": "must be positive" }
     ]
   },
-  "traceId": "01JXYZ...Z"
+  "trace_id": "01JXYZ...Z"
 }
 ```
 
@@ -351,11 +351,11 @@ Batch operations support **per-item idempotency** to enable safe retries.
 {
   "items": [
     {
-      "idempotencyKey": "user-action-123-item-0",
+      "idempotency_key": "user-action-123-item-0",
       "data": { "title": "Ticket 1", "priority": "high" }
     },
     {
-      "idempotencyKey": "user-action-123-item-1",
+      "idempotency_key": "user-action-123-item-1",
       "data": { "title": "Ticket 2", "priority": "medium" }
     }
   ]
@@ -364,25 +364,25 @@ Batch operations support **per-item idempotency** to enable safe retries.
 
 ### Server Behavior
 
-- Each item's `idempotencyKey` is matched independently
+- Each item's `idempotency_key` is matched independently
 - Only **successful (2xx) outcomes** are cached and replayed with the original response
 - Error responses (4xx/5xx) are **NOT cached**; retries re-execute to allow fresh validation, permission checks, and recovery from transient failures
 - Mix of new and replayed items is allowed in a single batch
 - **Idempotency retention** (tiered by operation criticality):
   - Minimum default: 1 hour (sufficient for network retry protection)
   - Important operations: 24h-7d (e.g., bulk notifications, report generation)
-  - Critical operations: Permanent via DB uniqueness on `idempotencyKey` (e.g., payment processing, invoice creation) → return `409 Conflict` per item if key exists after cache expiry
+  - Critical operations: Permanent via DB uniqueness on `idempotency_key` (e.g., payment processing, invoice creation) → return `409 Conflict` per item if key exists after cache expiry
 
 ### Replayed Item Indication
 
 ```json
 {
   "index": 0,
-  "idempotencyKey": "user-action-123-item-0",
+  "idempotency_key": "user-action-123-item-0",
   "status": 201,
   "data": { "id": "01J...", "title": "..." },
   "meta": {
-    "idempotencyReplayed": true
+    "idempotency_replayed": true
   }
 }
 ```
@@ -406,22 +406,22 @@ curl -X POST https://api.example.com/v1/tickets:batch \
   -d '{
     "items": [
       {
-        "idempotencyKey": "req-1",
+        "idempotency_key": "req-1",
         "data": {
           "title": "Fix login bug",
           "priority": "high",
-          "assigneeId": "01JUSR..."
+          "assignee_id": "01JUSR..."
         }
       },
       {
-        "idempotencyKey": "req-2",
+        "idempotency_key": "req-2",
         "data": {
           "title": "Update docs",
           "priority": "low"
         }
       },
       {
-        "idempotencyKey": "req-3",
+        "idempotency_key": "req-3",
         "data": {
           "title": "Invalid ticket",
           "priority": "invalid-value"
@@ -438,7 +438,7 @@ HTTP/1.1 207 Multi-Status
 Content-Type: application/json
 RateLimit-Policy: "default";q=100;w=3600
 RateLimit: "default";r=99;t=3540
-traceId: 01JXYZ...Z
+trace_id: 01JXYZ...Z
 ```
 
 ```json
@@ -446,16 +446,16 @@ traceId: 01JXYZ...Z
   "data": [
     {
       "index": 0,
-      "idempotencyKey": "req-1",
+      "idempotency_key": "req-1",
       "status": 201,
       "data": {
         "id": "01JTKT...",
         "title": "Fix login bug",
         "priority": "high",
         "status": "open",
-        "assigneeId": "01JUSR...",
-        "createdAt": "2025-09-01T20:00:00.000Z",
-        "updatedAt": "2025-09-01T20:00:00.000Z"
+        "assignee_id": "01JUSR...",
+        "created_at": "2025-09-01T20:00:00.000Z",
+        "updated_at": "2025-09-01T20:00:00.000Z"
       },
       "headers": {
         "Location": "/v1/tickets/01JTKT...",
@@ -464,15 +464,15 @@ traceId: 01JXYZ...Z
     },
     {
       "index": 1,
-      "idempotencyKey": "req-2",
+      "idempotency_key": "req-2",
       "status": 201,
       "data": {
         "id": "01JTKU...",
         "title": "Update docs",
         "priority": "low",
         "status": "open",
-        "createdAt": "2025-09-01T20:00:01.000Z",
-        "updatedAt": "2025-09-01T20:00:01.000Z"
+        "created_at": "2025-09-01T20:00:01.000Z",
+        "updated_at": "2025-09-01T20:00:01.000Z"
       },
       "headers": {
         "Location": "/v1/tickets/01JTKU...",
@@ -481,7 +481,7 @@ traceId: 01JXYZ...Z
     },
     {
       "index": 2,
-      "idempotencyKey": "req-3",
+      "idempotency_key": "req-3",
       "status": 422,
       "error": {
         "type": "https://api.example.com/errors/validation",
@@ -496,7 +496,7 @@ traceId: 01JXYZ...Z
             "message": "must be low, medium, or high"
           }
         ],
-        "traceId": "01JXYZ...Z-item-2"
+        "trace_id": "01JXYZ...Z-item-2"
       }
     }
   ],

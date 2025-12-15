@@ -55,7 +55,7 @@ type Ticket = {
   title: string;
   priority: 'low' | 'medium' | 'high';
   status: 'open' | 'in_progress' | 'resolved' | 'closed';
-  createdAt: string;
+  created_at: string;
 };
 
 export function useTickets(params: { limit?: number; after?: string }) {
