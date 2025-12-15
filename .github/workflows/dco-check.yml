@@ -10,10 +10,15 @@ on:
 jobs:
   dco:
     runs-on: ubuntu-latest
+    name: DCO Check
     steps:
-      - name: Check for DCO
-        uses: actions/checkout@v4
+      - name: Get PR Commits
+        id: 'get-pr-commits'
+        uses: tim-actions/get-pr-commits@master
         with:
-          fetch-depth: 0 # Required for DCO check to inspect all commits
-      - name: DCO Sign Off Check
-        uses: probot/dco@v2
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: DCO Check
+        uses: tim-actions/dco@master
+        with:
+          commits: ${{ steps.get-pr-commits.outputs.commits }}
+
