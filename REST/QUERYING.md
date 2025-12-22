@@ -489,12 +489,14 @@ GET /v1/tickets?limit=2&$select=id,title,status
 **Response** (200 OK) - only requested fields included:
 ```json
 {
-  "data": [
+  "items": [
     { "id": "01J...", "title": "Database timeout", "status": "open" },
     { "id": "01J...", "title": "Login error", "status": "in_progress" }
   ],
-  "meta": { "limit": 2, "has_next": true },
-  "links": { "next": "/v1/tickets?limit=2&cursor=..." }
+  "page_info": {
+    "limit": 2,
+    "next_cursor": "eyJ2IjoxLCJrIjpbIjIwMjUtMDktMTRUMTI6MzQ6NTcuMTAwWiIsIjAxSi4uLiJdLCJvIjoiZGVzYyIsInMiOiJjcmVhdGVkX2F0LGlkIn0"
+  }
 }
 ```
 

@@ -94,14 +94,21 @@ pub struct ListParams {
 
 #[derive(Debug, Serialize, ToSchema)]
 #[serde(rename_all = "snake_case")]
-pub struct Envelope<T> { pub data: T, pub meta: Meta, pub links: Links }
+pub struct ListResponse<T> {
+    pub items: Vec<T>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub page_info: Option<PageInfo>,
+}
 
 #[derive(Debug, Serialize, ToSchema)]
 #[serde(rename_all = "snake_case")]
-pub struct Meta { pub limit: u16, pub has_next: bool, pub has_prev: bool }
-
-#[derive(Debug, Serialize, ToSchema)]
-pub struct Links { pub next: Option<String>, pub prev: Option<String> }
+pub struct PageInfo {
+    pub limit: u16,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub next_cursor: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub prev_cursor: Option<String>,
+}
 
 /// List tickets with cursor pagination
 #[utoipa::path(
@@ -109,7 +116,7 @@ pub struct Links { pub next: Option<String>, pub prev: Option<String> }
     path = "/v1/tickets",
     params(ListParams),
     responses(
-        (status = 200, description = "List tickets", body = Envelope<Vec<Ticket>>),
+        (status = 200, description = "List tickets", body = ListResponse<Ticket>),
         (status = 422, description = "Validation error", body = Problem)
     ),
     security(("oauth2" = []))
@@ -117,22 +124,27 @@ pub struct Links { pub next: Option<String>, pub prev: Option<String> }
 pub async fn list_tickets(Query(params): Query<ListParams>) -> impl IntoResponse {
     // Example of extracting params from the filters map
     let limit = params.filters.get("limit").and_then(|s| s.parse().ok()).unwrap_or(25);
-    let after = params.filters.get("after").cloned();
-    // status.in=open,in_progress -> ["open", "in_progress"]
-    let statuses: Option<Vec<_>> = params.filters.get("status.in").map(|s| s.split(',').collect());
+    let cursor = params.filters.get("cursor").cloned();
+    // $filter=status in ('open','in_progress')
+    let filter = params.filters.get("$filter").cloned();
+    // $orderby=priority desc,created_at asc
+    let orderby = params.filters.get("$orderby").cloned();
 
     // ... database logic to fetch tickets based on filters ...
     let tickets: Vec<Ticket> = vec![]; // Placeholder
 
-    let response = Envelope {
-        data: tickets,
-        meta: Meta { limit, has_next: false, has_prev: false },
-        links: Links { next: None, prev: None },
+    let response = ListResponse {
+        items: tickets,
+        page_info: Some(PageInfo {
+            limit,
+            next_cursor: None, // Compute from last item if has_more
+            prev_cursor: None, // Compute from first item if not first page
+        }),
     };
 
     // Build response with headers
     let mut headers = HeaderMap::new();
-    headers.insert("traceId", "01J...".parse().unwrap());
+    headers.insert("trace_id", "01J...".parse().unwrap());
     (headers, Json(response))
 }
 ```

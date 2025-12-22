@@ -21,14 +21,15 @@ These are opinionated, concise, and LLM-friendly guidelines designed to create c
 - Frontend (React) usage patterns (optional): see [REACT.md](./languages/REACT.md)
 
 ## Key Decisions & Defaults
-- **JSON**: snake_case; envelope `{ data, meta, links }`; omit absent fields (avoid nulls)
+- **JSON**: snake_case; lists use `{ items, page_info }`, single objects unwrapped; omit absent fields (avoid nulls)
 - **Timestamps**: ISO-8601 UTC with `Z`, always include milliseconds (e.g., `2025-09-01T20:00:00.000Z`)
-- **Filtering**: `field.op=value` (omit `op` for eq). Example: `status.in=open,in_progress&created_at.gte=...`
-- **Pagination**: cursor-first (`limit`, `after`/`before`); default `25`, max `200`
+- **Filtering**: OData-style `$filter` with operators. Example: `$filter=status in ('open','in_progress') and created_at ge 2025-01-01T00:00:00Z`
+- **Sorting**: OData-style `$orderby`. Example: `$orderby=priority desc,created_at asc`
+- **Pagination**: cursor-based (`limit`, `cursor`); default `25`, max `200`; cursors in `page_info`
 - **Errors**: RFC 9457 Problem Details (`application/problem+json`)
 - **Concurrency**: `ETag` + `If-Match` (412 on mismatch)
 - **Idempotency**: `Idempotency-Key` on POST/PATCH/DELETE; retention 1h with replay detection
-- **Rate limits**: RFC 9239 headers (`RateLimit-*`); 429 includes `Retry-After`
+- **Rate limits**: IETF RateLimit headers (`RateLimit-Policy`, `RateLimit`); 429 includes `Retry-After`
 - **OpenAPI**: 3.1 as the source-of-truth; generate TS types and React hooks
 
 ## How to Adopt
@@ -73,11 +74,12 @@ curl -o docs/rust-api-guide.md https://raw.githubusercontent.com/hypernetix/DNA/
 ## REST API Standards
 Follow DNA guidelines for all API development:
 - Use the guidelines from docs/DNA/REST/API.md as the primary reference
-- JSON envelope format: `{ data, meta, links }`
+- JSON response format: lists use `{ items, page_info }`, single objects unwrapped
 - snake_case naming for JSON fields
 - ISO-8601 timestamps with milliseconds: `2025-01-14T10:30:15.123Z`
-- Cursor-based pagination with `limit`, `after`, `before` parameters
-- Filter syntax: `field.op=value` (e.g., `status.in=open,urgent`)
+- Cursor-based pagination with `limit`, `cursor` parameters
+- OData-style filtering: `$filter=status in ('open','urgent')`
+- OData-style sorting: `$orderby=priority desc,created_at asc`
 - RFC 9457 Problem Details for all errors
 - ETags for optimistic concurrency control
 - Idempotency-Key header for POST/PATCH/DELETE operations
@@ -113,19 +115,25 @@ api_standards:
 
 conventions:
   json_format:
-    envelope: "{ data, meta, links }"
+    lists: "{ items, page_info }"
+    single_objects: "unwrapped (fields at top level)"
     naming: "snake_case"
     timestamps: "ISO-8601 with milliseconds (.SSS)"
 
   pagination:
     type: "cursor-based"
-    params: ["limit", "after", "before"]
+    params: ["limit", "cursor"]
     defaults: { limit: 25, max: 200 }
+    response: "page_info with next_cursor, prev_cursor"
 
   filtering:
-    syntax: "field.op=value"
-    operators: ["eq", "ne", "lt", "lte", "gt", "gte", "in", "nin", "contains"]
-    examples: ["status.in=open,urgent", "created_at.gte=2025-01-01T00:00:00.000Z"]
+    syntax: "OData $filter"
+    operators: ["eq", "ne", "lt", "le", "gt", "ge", "in", "and", "or", "not"]
+    examples: ["$filter=status in ('open','urgent')", "$filter=created_at ge 2025-01-01T00:00:00Z"]
+
+  sorting:
+    syntax: "OData $orderby"
+    examples: ["$orderby=priority desc,created_at asc"]
 
   errors:
     format: "RFC 9457 Problem Details"

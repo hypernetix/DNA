@@ -55,7 +55,7 @@ Content-Type: application/json
 
 ```json
 {
-  "data": [
+  "items": [
     {
       "index": 0,
       "idempotency_key": "req-1",
@@ -93,12 +93,7 @@ Content-Type: application/json
         "trace_id": "01JXYZ...Z-item-1"
       }
     }
-  ],
-  "meta": {
-    "total": 2,
-    "succeeded": 1,
-    "failed": 1
-  }
+  ]
 }
 ```
 
@@ -111,7 +106,7 @@ Content-Type: application/json
 
 ```json
 {
-  "data": [
+  "items": [
     {
       "index": 0,
       "idempotency_key": "req-1",
@@ -124,12 +119,7 @@ Content-Type: application/json
       "status": 201,
       "data": { "id": "01K...", "title": "..." }
     }
-  ],
-  "meta": {
-    "total": 2,
-    "succeeded": 2,
-    "failed": 0
-  }
+  ]
 }
 ```
 
@@ -142,15 +132,10 @@ Content-Type: application/json
 
 ```json
 {
-  "data": [
+  "items": [
     { "index": 0, "status": 422, "error": { /* Problem Details */ } },
     { "index": 1, "status": 422, "error": { /* Problem Details */ } }
-  ],
-  "meta": {
-    "total": 2,
-    "succeeded": 0,
-    "failed": 2
-  }
+  ]
 }
 ```
 
@@ -443,7 +428,7 @@ trace_id: 01JXYZ...Z
 
 ```json
 {
-  "data": [
+  "items": [
     {
       "index": 0,
       "idempotency_key": "req-1",
