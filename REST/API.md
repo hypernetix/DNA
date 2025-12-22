@@ -240,6 +240,7 @@ For complete batch and bulk operations specification including error formats, at
 - **Error format**: Full RFC 9457 Problem Details per failed item
 - **Atomicity**: Endpoint-specific (best-effort default, atomic for critical operations)
 - **Idempotency**: Per-item `idempotency_key` with 1-hour retention
+- **Optimistic locking**: Per-item `if_match` field for version checking
 
 ## 20. OpenAPI & Codegen
 - **Source of truth**: OpenAPI 3.1
