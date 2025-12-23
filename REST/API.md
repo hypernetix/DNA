@@ -69,12 +69,21 @@ This document is an actionable, LLM-friendly playbook for building consistent, e
 - **Money**: Integer minor units + currency code
 - **Lists**: Arrays; use `[]` not `null`
 - **Envelope**:
+  - **Lists**: Use `items` array with optional top-level `page_info` for pagination
+  - **Single objects**: Return fields directly at top level (no wrapper)
 
 ```json
+// List response
 {
-  "data": { /* object or array */ },
-  "meta": { /* optional paging, totals */ },
-  "links": { /* optional self,next,prev */ }
+  "items": [ /* array of objects */ ],
+  "page_info": { /* optional: limit, next_cursor, prev_cursor */ }
+}
+
+// Single object response (no wrapper)
+{
+  "id": "01J...",
+  "title": "Example",
+  "created_at": "2025-09-01T20:00:00.000Z"
 }
 ```
 
@@ -231,6 +240,7 @@ For complete batch and bulk operations specification including error formats, at
 - **Error format**: Full RFC 9457 Problem Details per failed item
 - **Atomicity**: Endpoint-specific (best-effort default, atomic for critical operations)
 - **Idempotency**: Per-item `idempotency_key` with 1-hour retention
+- **Optimistic locking**: Per-item `if_match` field for version checking
 
 ## 20. OpenAPI & Codegen
 - **Source of truth**: OpenAPI 3.1
@@ -249,11 +259,14 @@ curl -sS \
 
 ```json
 {
-  "data": [
+  "items": [
     { "id": "01J...", "title": "Disk full", "priority": "high", "status": "open", "created_at": "2025-08-31T10:05:17.000Z" }
   ],
-  "meta": { "limit": 25, "has_next": true },
-  "links": { "next": "...after=...", "prev": null }
+  "page_info": {
+    "limit": 25,
+    "next_cursor": "eyJ2IjoxLCJrIjpbIjIwMjUtMDgtMzFUMTA6MDU6MTcuMDAwWiIsIjAxSi4uLiJdLCJvIjoiZGVzYyIsInMiOiJjcmVhdGVkX2F0LGlkIn0",
+    "prev_cursor": null
+  }
 }
 ```
 
@@ -348,21 +361,14 @@ Each endpoint must be comprehensively documented to serve both human developers 
 **Success Response** (201):
 ```json
 {
-  "data": {
-    "id": "res_01JCXYZ...",
-    "title": "string",
-    "description": "string",
-    "priority": "medium",
-    "category": "string",
-    "status": "active",
-    "created_at": "2024-01-15T10:30:00Z",
-    "updated_at": "2024-01-15T10:30:00Z"
-  },
-  "meta": { "version": "1.0" },
-  "links": {
-    "self": "/v1/resources/res_01JCXYZ...",
-    "updates": "/v1/resources/res_01JCXYZ.../updates"
-  }
+  "id": "res_01JCXYZ...",
+  "title": "string",
+  "description": "string",
+  "priority": "medium",
+  "category": "string",
+  "status": "active",
+  "created_at": "2024-01-15T10:30:00Z",
+  "updated_at": "2024-01-15T10:30:00Z"
 }
 ```
 

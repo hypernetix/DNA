@@ -58,13 +58,22 @@ type Ticket = {
   created_at: string;
 };
 
-export function useTickets(params: { limit?: number; after?: string }) {
+type ListResponse<T> = {
+  items: T[];
+  page_info?: {
+    limit: number;
+    next_cursor?: string;
+    prev_cursor?: string;
+  };
+};
+
+export function useTickets(params: { limit?: number; cursor?: string }) {
   const qs = new URLSearchParams();
   if (params.limit) qs.set('limit', String(params.limit));
-  if (params.after) qs.set('after', params.after);
+  if (params.cursor) qs.set('cursor', params.cursor);
   return useQuery({
     queryKey: ['tickets', params],
-    queryFn: () => fetchJson<{ data: Ticket[]; meta: any; links: any }>(`/v1/tickets?${qs.toString()}`),
+    queryFn: () => fetchJson<ListResponse<Ticket>>(`/v1/tickets?${qs.toString()}`),
     staleTime: 30_000,
   });
 }
