@@ -26,6 +26,7 @@ These are opinionated, concise, and LLM-friendly guidelines designed to create c
 - **Filtering**: OData-style `$filter` with operators. Example: `$filter=status in ('open','in_progress') and created_at ge 2025-01-01T00:00:00Z`
 - **Sorting**: OData-style `$orderby`. Example: `$orderby=priority desc,created_at asc`
 - **Pagination**: cursor-based (`limit`, `cursor`); default `25`, max `200`; cursors in `page_info`
+- **Field projection**: OData-style `$select`. Example: `$select=id,title`
 - **Errors**: RFC 9457 Problem Details (`application/problem+json`)
 - **Concurrency**: `ETag` + `If-Match` (412 on mismatch)
 - **Idempotency**: `Idempotency-Key` on POST/PATCH/DELETE; retention 1h with replay detection

@@ -129,8 +129,10 @@ pub async fn list_tickets(Query(params): Query<ListParams>) -> impl IntoResponse
     let filter = params.filters.get("$filter").cloned();
     // $orderby=priority desc,created_at asc
     let orderby = params.filters.get("$orderby").cloned();
+    // $select=id,title,status,priority
+    let select = params.filters.get("$select").cloned();
 
-    // ... database logic to fetch tickets based on filters ...
+    // ... database logic to fetch tickets based on filters, select ...
     let tickets: Vec<Ticket> = vec![]; // Placeholder
 
     let response = ListResponse {
