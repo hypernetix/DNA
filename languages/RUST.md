@@ -159,3 +159,19 @@ pub async fn list_tickets(Query(params): Query<ListParams>) -> impl IntoResponse
 ## Timestamps
 - Use `time::OffsetDateTime` for timestamp fields.
 - To ensure RFC3339 / ISO-8601 formatting with milliseconds, use `#[serde(with = "time::serde::rfc3339")]` for required fields and `#[serde(with = "time::serde::rfc3339::option")]` for optional ones.
+
+## Durations
+- Use `std::time::Duration` for duration fields in configuration files.
+- To parse human-readable durations (e.g., "5m", "1h 30m", "2d"), wrap `Duration` in a custom serializer/deserializer using `#[serde(with = "modkit_utils::humantime_serde::option", default)]`.
+- Usage example in configuration structs:
+```rust
+use serde::{Deserialize, Serialize};
+use std::time::Duration;
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Config {
+    #[serde(with = "modkit_utils::humantime_serde::option", default)]
+    pub timeout: Duration
+}
+```
+- This allows configuration files to use readable formats like `timeout = "30s"` or `retry_interval = "5m"` instead of raw milliseconds or seconds.
