@@ -142,18 +142,17 @@ Link: <https://docs.api.example.com/migration/v1-to-v2>; rel="deprecation"
 
 ### Deprecation Response Format
 
-For deprecated endpoints, maintain functionality but add warnings:
+For deprecated endpoints, maintain functionality but add warnings via **HTTP headers** (as specified in main API guidelines):
 
-```json
+```http
+HTTP/1.1 200 OK
+Deprecation: true
+Sunset: Sat, 31 Dec 2025 23:59:59 GMT
+Link: <https://docs.api.example.com/migration/v1-to-v2>; rel="deprecation"
+Content-Type: application/json
+
 {
-  "data": { /* normal response */ },
-  "meta": {
-    "deprecation": {
-      "deprecated": true,
-      "sunset": "2025-12-31T23:59:59.000Z",
-      "migration": "https://docs.api.example.com/migration/v1-to-v2"
-    }
-  }
+  /* normal response format - no wrapper for single objects, "items" + "page_info" for lists */
 }
 ```
 

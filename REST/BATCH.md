@@ -9,6 +9,7 @@ This document specifies how to design and implement batch/bulk endpoints in REST
 - [Status Code Rules](#status-code-rules)
 - [Error Format](#error-format)
 - [Cross-Item Conflicts](#cross-item-conflicts)
+- [Optimistic Locking](#optimistic-locking)
 - [Atomicity (Transactional Semantics)](#atomicity-transactional-semantics)
 - [Idempotency](#idempotency)
 - [Performance Limits](#performance-limits)
@@ -22,6 +23,11 @@ This document specifies how to design and implement batch/bulk endpoints in REST
 - **Request limit**: Default 100 items per batch (configurable per endpoint, must be documented)
 
 ## Request Format
+
+Each item in a batch request contains:
+- `idempotency_key` (optional): Unique identifier for idempotent processing
+- `if_match` (optional): ETag value for optimistic locking
+- `data` (required): The resource data for this operation
 
 ```json
 {
@@ -46,6 +52,16 @@ This document specifies how to design and implement batch/bulk endpoints in REST
 
 ## Response Formats
 
+Each item in a batch response contains:
+- `index` (required): Zero-based position in the request array
+- `idempotency_key` (if provided): Echoed from request for correlation
+- `status` (required): HTTP status code for this item
+- `data` (success case): The resource representation
+- `error` (failure case): RFC 9457 Problem Details
+- `location` (optional): URI of created/modified resource
+- `etag` (optional): Current version identifier for the resource
+- `idempotency_replayed` (optional): Present and `true` if response was replayed from cache
+
 ### Partial Success
 
 ```http
@@ -55,11 +71,13 @@ Content-Type: application/json
 
 ```json
 {
-  "data": [
+  "items": [
     {
       "index": 0,
       "idempotency_key": "req-1",
       "status": 201,
+      "location": "/v1/tickets/01J...",
+      "etag": "W/\"abc123\"",
       "data": {
         "id": "01J...",
         "title": "Fix login bug",
@@ -67,10 +85,6 @@ Content-Type: application/json
         "status": "open",
         "created_at": "2025-09-01T20:00:00.000Z",
         "updated_at": "2025-09-01T20:00:00.000Z"
-      },
-      "headers": {
-        "Location": "/v1/tickets/01J...",
-        "ETag": "W/\"abc123\""
       }
     },
     {
@@ -93,12 +107,7 @@ Content-Type: application/json
         "trace_id": "01JXYZ...Z-item-1"
       }
     }
-  ],
-  "meta": {
-    "total": 2,
-    "succeeded": 1,
-    "failed": 1
-  }
+  ]
 }
 ```
 
@@ -111,25 +120,24 @@ Content-Type: application/json
 
 ```json
 {
-  "data": [
+  "items": [
     {
       "index": 0,
       "idempotency_key": "req-1",
       "status": 201,
+      "location": "/v1/tickets/01J...",
+      "etag": "W/\"abc123\"",
       "data": { "id": "01J...", "title": "..." }
     },
     {
       "index": 1,
       "idempotency_key": "req-2",
       "status": 201,
+      "location": "/v1/tickets/01K...",
+      "etag": "W/\"def456\"",
       "data": { "id": "01K...", "title": "..." }
     }
-  ],
-  "meta": {
-    "total": 2,
-    "succeeded": 2,
-    "failed": 0
-  }
+  ]
 }
 ```
 
@@ -142,15 +150,10 @@ Content-Type: application/json
 
 ```json
 {
-  "data": [
+  "items": [
     { "index": 0, "status": 422, "error": { /* Problem Details */ } },
     { "index": 1, "status": 422, "error": { /* Problem Details */ } }
-  ],
-  "meta": {
-    "total": 2,
-    "succeeded": 0,
-    "failed": 2
-  }
+  ]
 }
 ```
 
@@ -269,6 +272,71 @@ Conflicts with existing resources (not within the batch) are treated as per-item
 }
 ```
 
+## Optimistic Locking
+
+Batch operations support per-item optimistic locking via the `if_match` field to prevent lost updates when multiple clients modify the same resources concurrently.
+
+### Request with Version Checks
+
+Each item may include an optional `if_match` field containing the ETag from a previous read:
+
+```json
+{
+  "items": [
+    {
+      "idempotency_key": "req-1",
+      "if_match": "W/\"abc123\"",
+      "data": {
+        "id": "01JTKT...",
+        "status": "completed"
+      }
+    },
+    {
+      "idempotency_key": "req-2",
+      "if_match": "W/\"def456\"",
+      "data": {
+        "id": "01JTKU...",
+        "priority": "high"
+      }
+    }
+  ]
+}
+```
+
+### Version Mismatch Handling
+
+When `if_match` is provided and doesn't match the current resource version, the item fails with `412 Precondition Failed`:
+
+```json
+{
+  "items": [
+    {
+      "index": 0,
+      "idempotency_key": "req-1",
+      "status": 412,
+      "error": {
+        "type": "https://api.example.com/errors/precondition-failed",
+        "title": "Precondition failed",
+        "status": 412,
+        "detail": "Resource was modified since last read. ETag mismatch.",
+        "trace_id": "01JXYZ...Z-item-0"
+      }
+    },
+    {
+      "index": 1,
+      "idempotency_key": "req-2",
+      "status": 200,
+      "etag": "W/\"ghi012\"",
+      "data": {
+        "id": "01JTKU...",
+        "priority": "high",
+        "updated_at": "2025-09-01T20:01:00.000Z"
+      }
+    }
+  ]
+}
+```
+
 ## Atomicity (Transactional Semantics)
 
 Default behavior is **endpoint-specific** and must be documented for each batch operation.
@@ -375,15 +443,17 @@ Batch operations support **per-item idempotency** to enable safe retries.
 
 ### Replayed Item Indication
 
+When a request is replayed from the idempotency cache, the response includes `idempotency_replayed: true`:
+
 ```json
 {
   "index": 0,
   "idempotency_key": "user-action-123-item-0",
   "status": 201,
-  "data": { "id": "01J...", "title": "..." },
-  "meta": {
-    "idempotency_replayed": true
-  }
+  "location": "/v1/tickets/01J...",
+  "etag": "W/\"abc123\"",
+  "idempotency_replayed": true,
+  "data": { "id": "01J...", "title": "..." }
 }
 ```
 
@@ -443,11 +513,13 @@ trace_id: 01JXYZ...Z
 
 ```json
 {
-  "data": [
+  "items": [
     {
       "index": 0,
       "idempotency_key": "req-1",
       "status": 201,
+      "location": "/v1/tickets/01JTKT...",
+      "etag": "W/\"abc123\"",
       "data": {
         "id": "01JTKT...",
         "title": "Fix login bug",
@@ -456,16 +528,14 @@ trace_id: 01JXYZ...Z
         "assignee_id": "01JUSR...",
         "created_at": "2025-09-01T20:00:00.000Z",
         "updated_at": "2025-09-01T20:00:00.000Z"
-      },
-      "headers": {
-        "Location": "/v1/tickets/01JTKT...",
-        "ETag": "W/\"abc123\""
       }
     },
     {
       "index": 1,
       "idempotency_key": "req-2",
       "status": 201,
+      "location": "/v1/tickets/01JTKU...",
+      "etag": "W/\"def456\"",
       "data": {
         "id": "01JTKU...",
         "title": "Update docs",
@@ -473,10 +543,6 @@ trace_id: 01JXYZ...Z
         "status": "open",
         "created_at": "2025-09-01T20:00:01.000Z",
         "updated_at": "2025-09-01T20:00:01.000Z"
-      },
-      "headers": {
-        "Location": "/v1/tickets/01JTKU...",
-        "ETag": "W/\"def456\""
       }
     },
     {
@@ -499,11 +565,6 @@ trace_id: 01JXYZ...Z
         "trace_id": "01JXYZ...Z-item-2"
       }
     }
-  ],
-  "meta": {
-    "total": 3,
-    "succeeded": 2,
-    "failed": 1
-  }
+  ]
 }
 ```
