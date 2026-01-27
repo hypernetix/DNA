@@ -214,7 +214,7 @@ Guidelines:
 
 Assume canonical sort `created_at DESC, id DESC`.
 
-1) Normalize and clamp `limit` to [1, MAX_LIMIT]. Use `page_size = min(request.limit || 20, 100)`.
+1) Normalize and clamp `limit` to `[1, MAX_LIMIT]`. Use `page_size = min(request.limit || 20, 100)`.
 2) If `cursor` is provided, decode it to `(cursor_created_at, cursor_id)`.
 3) Build the predicate for forward pagination in canonical order:
    - For DESC order: `(created_at, id) < (cursor_created_at, cursor_id)`.
