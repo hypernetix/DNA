@@ -3,7 +3,7 @@
 **Complete specification for creating beautiful, readable PlantUML diagrams**
 
 ## Table of Contents
-1. [Color Scheme](#color-scheme)
+1. [Color Scheme](#color-schemes)
 2. [Complete Template](#complete-template)
 3. [Component Colors](#component-colors)
 4. [Grouping Examples](#grouping-examples)
