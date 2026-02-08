@@ -1,6 +1,6 @@
 # Batch & Bulk Operations
 
-This document specifies how to design and implement batch/bulk endpoints in REST APIs following the Hypernetix guidelines.
+This document specifies how to design and implement batch/bulk endpoints in REST APIs following the Cyber Fabric guidelines.
 
 ## Table of Contents
 - [Endpoint Pattern](#endpoint-pattern)
